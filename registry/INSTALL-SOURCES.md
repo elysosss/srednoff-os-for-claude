@@ -2,6 +2,54 @@
 
 Большинство записей `CORE-300.md` помечены `INST`/`ANTH` — **уже доступны**, ставить ничего не нужно. Внешние (`WSH`, `VOLT`) ставятся только когда профиль проекта реально их требует.
 
+## SREDNOFF — Ivan'а собственный sibling-репозиторий (тот же автор, MIT, vetted=true)
+Источник: [srednoff888-art/srednoff-os](https://github.com/srednoff888-art/srednoff-os) — Codex-версия
+этой же OS. Записи `SREDNOFF` — не unvetted-discovery как WSH/VOLT/GH: это Иванова же работа под MIT,
+без отдельного лицензионного ревью (verification gate rule 70 её не требует для `SREDNOFF`, только
+для внешних supply-chain источников). 303 скилла из `.codex/skills/` этого репо адаптированы под
+Claude Code (текст: `Codex`→`Claude Code`, пути `.codex/`→`.claude/`) и лежат в
+`templates/claude-md-os/skills-library/<name>/SKILL.md` — НЕ грузятся автоматически. Уже
+**установлены**, но не **активированы**: `gen-profile-lock.ps1/.sh` при генерации PROFILE.lock
+копирует до 20 тег-совпадающих скиллов из `skills-library/` в `.claude/skills/` проекта (жёсткий
+кап — ~100 токенов на скилл на старте сессии Claude Code, 303 скилла целиком = 30k+ токенов, что
+неприемлемо). Полная библиотека: `skills-library/index.json`. 2 записи (`quality-cost-skill-kernel`,
+`source-ranking-roi-selector`) — донор-специфичные мета-концепции, description backfilled, но
+контент НЕ импортирован (см. `PLAN-V2-MERGE-FROM-CODEX.md`, "НЕ БРАТЬ"). 3 записи с совпадающим
+именем (`github-research`, `production-review`, `seo`) НЕ тронуты — у нас уже есть канонические
+версии этих скиллов.
+
+## Ads/Yandex/Telegram — добавлено по запросу Ивана 27.07.2026, все source-verified через `gh repo view`
+- **[Silverov/yandex-direct-skill](https://github.com/Silverov/yandex-direct-skill)** (MIT, 43★,
+  жив) — единственный найденный реальный Yandex Direct API v5 скилл на момент проверки. Импортирован
+  целиком (SKILL.md + references/ + scripts/ + agents/) → `skills-library/yandex-direct-ppc/`.
+- **[AgriciDaniel/claude-ads](https://github.com/AgriciDaniel/claude-ads)** (MIT, 7554★, активно
+  поддерживается — пуш в день проверки) — 12-платформенный paid-media audit-инструмент (Google, Meta,
+  YouTube, LinkedIn, TikTok, Microsoft, Apple, Amazon, Reddit, Pinterest, Snapchat, X), 34 отдельных
+  SKILL.md + общий operating contract + 38 reference-файлов. Импортированы только Google+Meta (то, что
+  явно запросил Иван) + общий contract → `paid-ads-operating-contract/`, `google-ads-full-audit/`,
+  `meta-ads-full-audit/`. Остальные 30 платформенных скиллов НЕ импортированы (не запрошены) —
+  каталог-запись `paid-ads-operating-contract` документирует, что источник содержит больше, если
+  понадобится Amazon/TikTok/LinkedIn/etc. в будущем.
+- **[davila7/claude-code-templates](https://github.com/davila7/claude-code-templates)** (MIT,
+  29942★, очень активно поддерживается) — крупная CLI-коллекция компонентов Claude Code. Взят только
+  `telegram-bot-builder` (production-паттерны Bot API v9.4, Node.js+Python) → `skills-library/
+  telegram-bot-builder/`. Остальное содержимое репо НЕ проверялось и НЕ импортировалось.
+- **[zubair-trabzada/ai-ads-claude](https://github.com/zubair-trabzada/ai-ads-claude)** (MIT, 208★)
+  — альтернативный AI-генератор рекламной стратегии/копирайта. Только catalog-запись (discovery-tier),
+  контент НЕ импортирован в skills-library — ревью перед использованием.
+- **[Telegram-Mini-Apps/nextjs-template](https://github.com/Telegram-Mini-Apps/nextjs-template)**
+  (официальная организация Telegram-экосистемы, 370★) — **LICENSE-файл не найден** (`gh api .../license`
+  → 404) — проверить условия использования перед коммерческим применением. Только catalog-запись
+  (project-starter, как `vibe-template-web`), контент не импортирован.
+- **Telegram Ads (ads.telegram.org)** — стороннего скилла НЕ найдено (проверено WebSearch, 27.07.2026).
+  `telegram-ads-channel-placement` написан нами напрямую по официальной документации платформы
+  (source `SREDNOFF`, не `GH:` — честно помечено как наш собственный текст, не адаптация чужого).
+- **Website-building / SEO — намеренно НЕ добавлено ничего нового**: SEO уже покрыт (`claude-seo`,
+  `claude-blog`, `Agentic-SEO-Skill`, канон `seo`/`seo-geo`); website-building уже покрыт (ANTH
+  `frontend-design`, `ui-ux-pro-max`, `frontend-design-toolkit` + десятки SREDNOFF-скиллов). Найденный
+  кандидат `lotfb86/web-design-skills` (3★, без LICENSE) отклонён — слишком низкое качество/доверие
+  для добавления только ради количества (Принцип №1: качество первично).
+
 ## ANTH-OFF — официальный маркетплейс Anthropic (ПРИОРИТЕТ №1, vetted)
 Высший уровень доверия: курируется Anthropic → проходит гейт без сомнений. Брать отсюда первым делом.
 ```

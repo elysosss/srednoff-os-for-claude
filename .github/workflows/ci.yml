@@ -53,6 +53,16 @@ jobs:
         run: bash "$HOME/.claude/registry/validate-catalog-format.sh"
       - name: Registry audit (duplicate names, source counts)
         run: bash "$HOME/.claude/registry/audit-registry.sh"
+      - name: Catalog JSON export drift gate (CORE-300.json must match CORE-300.md)
+        run: bash "$HOME/.claude/registry/gen-catalog-json.sh" --check
+      - name: Skills-library metadata smoke check (name/description/frontmatter validity)
+        run: bash "$HOME/.claude/templates/claude-md-os/scripts/validate-skills-library.sh"
+      - name: Docs portal validation (required docs present, no TODO markers, all linked)
+        run: bash "$HOME/.claude/templates/claude-md-os/scripts/validate-docs.sh"
+      - name: Benchmark harness syntax check (not executed - no API auth in CI)
+        run: |
+          python3 -m py_compile benchmarks/run_claude_benchmark.py
+          rm -rf benchmarks/__pycache__
       - name: Eval suite (mode/domain/selector/secret-pattern regression)
         run: bash "$HOME/.claude/templates/claude-md-os/scripts/run-evals.sh"
 
@@ -194,6 +204,8 @@ jobs:
           $tpl = "$env:USERPROFILE\.claude\templates\claude-md-os"
           & "$reg\validate-catalog-format.ps1"; if ($LASTEXITCODE -ne 0) { throw "catalog validator failed" }
           & "$reg\audit-registry.ps1";          if ($LASTEXITCODE -ne 0) { throw "registry audit failed" }
+          & "$tpl\scripts\validate-skills-library.ps1"; if ($LASTEXITCODE -ne 0) { throw "skills-library validation failed" }
+          & "$tpl\scripts\validate-docs.ps1";     if ($LASTEXITCODE -ne 0) { throw "docs validation failed" }
           & "$tpl\scripts\run-evals.ps1";        if ($LASTEXITCODE -ne 0) { throw "eval suite failed" }
       - name: Hook canary (PowerShell hooks must deny/block known-bad input)
         shell: powershell

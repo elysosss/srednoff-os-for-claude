@@ -36,6 +36,14 @@ Select-String -Path "$env:USERPROFILE\.claude\registry\CORE-300.md" -Pattern "\[
 ```
 Lock — стартовая точка, не догма: под конкретную задачу можно звать любую запись из CORE-300 (Принцип №1).
 
+**Установленные скиллы vs текстовые кандидаты (v1.17)** — большинство строк CORE-300.md — это
+текстовый каталог (грепай, читай, применяй вручную). Отдельная кураторская подгруппа (303 записи,
+источник `SREDNOFF`, см. `INSTALL-SOURCES.md`) имеет реальный `SKILL.md`-контент в
+`templates/claude-md-os/skills-library/` — `gen-profile-lock` уже АВТОМАТИЧЕСКИ ставит до 20
+тег-совпадающих из них в `.claude/skills/` проекта при генерации lock'а. Строка PROFILE.lock
+`skills installed: N` — сколько реально стало Claude Code Skills (`Skill()`-вызываемых), а не
+просто текстовых наводок. Остальные ~1700 записей каталога — по-прежнему справочный текст.
+
 ## Динамический роутинг (per-задача, не только per-проект) — v1.4
 
 Перед существенной работой (не мелкой правкой), особенно если задача может выходить за рамки статичного `PROFILE.lock` (напр. 3D-задача в web-проекте):
@@ -48,6 +56,12 @@ powershell -NoProfile -File "$env:USERPROFILE\.claude\registry\domain-router.ps1
 powershell -NoProfile -File "$env:USERPROFILE\.claude\registry\select-skills.ps1" -Brief "<задача>" -Budget balanced -Max 16
 ```
 Health-check: `powershell -NoProfile -File "$env:USERPROFILE\.claude\templates\claude-md-os\scripts\doctor.ps1" -ProjectPath "." -RunEvals -FixSafe`.
+
+**UI/3D/design/growth source selection (v1.16)** — перед выбором внешней UI-библиотеки, 3D-ассета, компонент-маркетплейса или design-коннектора прогони ranker вместо выбора источника по памяти:
+```powershell
+powershell -NoProfile -File "$env:USERPROFILE\.claude\registry\source-ranker.ps1" -Brief "<задача>" -Max 8
+```
+Возвращает ранжированный список с `score`/`risk`/`license`/`gates` из `registry/design-source-registry.json` (17 источников: shadcn, 21st.dev, Three.js, react-three-fiber, Sketchfab и др.) — `gates` явно перечисляет, что нужно проверить (лицензия, provenance, accessibility, размер ассета) перед копированием. Это дополняет, не заменяет, верификационный гейт ниже — source-ranker покрывает конкретно готовые UI/3D/design источники, github-research — произвольный внешний код/паттерны.
 
 ## Верификационный гейт для внешних агентов (supply-chain)
 - **Реально доступны без установки только `INST`/`ANTH`.** Всё остальное (`WSH/VOLT/FTB/GH/EXT`) — **по умолчанию `unvetted`**, звёзды ≠ безопасность/качество/лицензия.

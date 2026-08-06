@@ -53,6 +53,26 @@ else
   add_check "structure" "FAIL" "$missing_lines"
 fi
 
+# 2a2. Template drift (project's PROFILE.lock.md "OS version" stamp vs the current
+# registry/version.json). Informational only (WARN, never FAIL) - an older stamp just
+# means the project hasn't been synced since a newer OS version shipped; run
+# apply-os-all.sh --sync (or init-claude-project.sh directly) to refresh it.
+lock_path="$project_root/.claude/PROFILE.lock.md"
+version_file="$registry/version.json"
+if [ -f "$lock_path" ] && [ -f "$version_file" ] && command -v jq >/dev/null 2>&1; then
+  current_version="$(jq -r '.version // "unknown"' "$version_file" 2>/dev/null || echo "unknown")"
+  project_version="$(grep -m1 '^OS version: ' "$lock_path" | sed -E 's/^OS version: ([^ ]+).*/\1/')"
+  if [ -n "$project_version" ]; then
+    if [ "$project_version" = "$current_version" ]; then
+      add_check "template-drift" "OK" "project=$project_version current=$current_version"
+    else
+      add_check "template-drift" "WARN" "project=$project_version current=$current_version - run apply-os-all.sh --sync or re-run init to refresh"
+    fi
+  else
+    add_check "template-drift" "WARN" "PROFILE.lock.md has no OS version stamp (generated before this check existed) - re-run gen-profile-lock or init to add it"
+  fi
+fi
+
 # 2b. Registry audit (cheap, local-only, no network - always safe to run)
 if command -v jq >/dev/null 2>&1; then
   audit_out="$(bash "$registry/audit-registry.sh" --json 2>/dev/null)"
@@ -67,9 +87,41 @@ if command -v jq >/dev/null 2>&1; then
   parsed_count="$(printf '%s' "$validate_out" | jq -r '.total_parsed // 0')"
   validate_status="OK"; [ "${issues_count:-0}" -gt 0 ] && validate_status="WARN"
   add_check "catalog-format" "$validate_status" "parsed=$parsed_count; issues=$issues_count"
+  # 2c2. Catalog JSON export drift gate (CORE-300.json must stay in sync with CORE-300.md;
+  # see registry/RFC-CATALOG-JSON.md - external consumers read the JSON directly).
+  if [ -f "$registry/gen-catalog-json.sh" ]; then
+    catalog_json_out="$(bash "$registry/gen-catalog-json.sh" --check 2>&1)"
+    catalog_json_status="OK"
+    case "$catalog_json_out" in *"OK - CORE-300.json is in sync"*) ;; *) catalog_json_status="WARN" ;; esac
+    add_check "catalog-json" "$catalog_json_status" "$catalog_json_out"
+  fi
 else
   add_check "registry-audit" "WARN" "jq not found - skipped"
   add_check "catalog-format" "WARN" "jq not found - skipped"
+fi
+
+# 2c3. Skills-library metadata smoke check (v1.17, Stage 3 skill import) - name/description/
+# frontmatter validity for the curated, installable subset of the catalog. Runs against
+# the TEMPLATE root, not the project being doctored - skills-library lives in the template,
+# not per-project.
+skills_lib_script="$script_dir/validate-skills-library.sh"
+if [ -f "$skills_lib_script" ] && command -v jq >/dev/null 2>&1; then
+  skills_lib_out="$(bash "$skills_lib_script" --json 2>/dev/null)"
+  skills_lib_ok="$(printf '%s' "$skills_lib_out" | jq -r '.ok // 0')"
+  skills_lib_failed="$(printf '%s' "$skills_lib_out" | jq -r '.failed // 0')"
+  skills_lib_status="OK"; [ "${skills_lib_failed:-0}" -gt 0 ] && skills_lib_status="FAIL"
+  add_check "skills-library" "$skills_lib_status" "ok=$skills_lib_ok; failed=$skills_lib_failed"
+fi
+
+# 2c4. Docs portal validation (v1.18, Phase 4) - required docs present, non-empty, no
+# unresolved TODO/TBD, README.md links every doc. Runs against the TEMPLATE root.
+docs_script="$script_dir/validate-docs.sh"
+if [ -f "$docs_script" ] && command -v jq >/dev/null 2>&1; then
+  docs_out="$(bash "$docs_script" --json 2>/dev/null)"
+  docs_count="$(printf '%s' "$docs_out" | jq -r '.docs // 0')"
+  docs_issues="$(printf '%s' "$docs_out" | jq -r '.issues // 0')"
+  docs_status="OK"; [ "${docs_issues:-0}" -gt 0 ] && docs_status="WARN"
+  add_check "docs" "$docs_status" "docs=$docs_count; issues=$docs_issues"
 fi
 
 # 2d. Registry/template version control. Auto-commits any pending changes so a bad edit is

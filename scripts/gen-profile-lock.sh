@@ -17,6 +17,14 @@ core="$HOME/.claude/registry/CORE-300.md"
 if [ ! -f "$core" ]; then echo "CORE-300.md not found: $core" >&2; exit 1; fi
 total="$(grep -Ec '^[[:space:]]*[0-9]+\.' "$core" || true)"
 
+# Stamp the OS version this project was last synced against, so doctor can detect
+# template drift without needing a separate marker file.
+version_file="$HOME/.claude/registry/version.json"
+os_version="unknown"
+if [ -f "$version_file" ] && command -v jq >/dev/null 2>&1; then
+  os_version="$(jq -r '.version // "unknown"' "$version_file" 2>/dev/null || echo "unknown")"
+fi
+
 tags=()
 add_tag() {
   local t="$1" existing
@@ -34,12 +42,14 @@ if [ -f "$target/package.json" ]; then
   printf '%s' "$pkg" | grep -Eq 'framer-motion|gsap' && add_tag "animation"
   printf '%s' "$pkg" | grep -Eq '@anthropic|openai|ai-sdk' && add_tag "ai"
   printf '%s' "$pkg" | grep -Eq 'tailwind|shadcn' && add_tag "design"
+  printf '%s' "$pkg" | grep -Eq 'telegraf|grammy|@telegram-apps|node-telegram-bot-api|tma\.js' && add_tag "telegram"
 fi
 if [ -f "$target/requirements.txt" ] || [ -f "$target/pyproject.toml" ]; then
   add_tag "backend"
   py="$(cat "$target/requirements.txt" 2>/dev/null || true; cat "$target/pyproject.toml" 2>/dev/null || true)"
   printf '%s' "$py" | grep -Eq 'ccxt|backtest|binance|trading' && add_tag "trading"
   printf '%s' "$py" | grep -Eq 'torch|sklearn|scikit|tensorflow|pandas|numpy' && { add_tag "ml"; add_tag "data"; }
+  printf '%s' "$py" | grep -Eq 'python-telegram-bot|aiogram|pyTelegramBotAPI' && add_tag "telegram"
 fi
 find "$target" -maxdepth 1 -name "*.ps1" -print -quit 2>/dev/null | grep -q . && add_tag "windows"
 if [ -f "$target/Dockerfile" ] || find "$target" -name "*.tf" -print -quit 2>/dev/null | grep -q .; then
@@ -49,6 +59,8 @@ echo "$name" | grep -Eqi 'amazon|fba' && { add_tag "amazon"; add_tag "business";
 echo "$name" | grep -Eqi 'seo' && add_tag "seo"
 echo "$name" | grep -Eqi 'freelance|outreach|strategy|sales|crm' && { add_tag "sales"; add_tag "marketing"; }
 echo "$name" | grep -Eqi 'design' && add_tag "design"
+echo "$name" | grep -Eqi 'telegram|tg-bot|tgbot|miniapp|mini-app' && add_tag "telegram"
+echo "$name" | grep -Eqi 'yandex-direct|direct-ads|ppc|adwords|google-ads|meta-ads|paid-ads' && { add_tag "ppc"; add_tag "marketing"; }
 [ "${#tags[@]}" -eq 0 ] && add_tag "web"
 
 # --- pull candidates from CORE-300 by tags (dedupe by skill name so G2/G3 variants of the
@@ -76,6 +88,7 @@ tags_csv="$(printf '%s, ' "${tags[@]}")"; tags_csv="${tags_csv%, }"
   echo "# PROFILE.lock - cached skill selection for project '$name'"
   echo ""
   echo "Generated $ts by gen-profile-lock.sh. CACHE: load this instead of grepping CORE-300.md ($total entries) each session = context saving."
+  echo "OS version: $os_version (see ~/.claude/registry/version.json for the current template version)."
   echo "Principle #1: QUALITY FIRST, economy only at equal quality. Starting set - refine per task; any CORE-300 entry may be called."
   echo "Model routing: see 80-model-routing.md (G1~Haiku, G2~Sonnet, G3~Opus by required quality)."
   echo "External agents (GH/WSH/VOLT/FTB/EXT) = unvetted until github-research + license check (see 70-skills-registry.md)."
@@ -138,5 +151,85 @@ if [ -f "$claude_md" ]; then
   fi
 fi
 
+# --- Install actual skill content for skills-library-backed candidates (v1.17). CORE-300
+# has 2000+ text-only catalog lines; only a curated subset (srednoff-os/Codex-sibling
+# import, Stage 3) has real installable SKILL.md content in skills-library/. Install up
+# to a hard cap so a project never gets hundreds of skills loaded at session start -
+# Claude Code scans name+description for every installed skill (~100 tokens each) even
+# when unused, so capping here is a real context-budget decision, not cosmetic.
+# Matched independently against skills-library/index.json (not against $candidates, the
+# capped-at-40 general text candidate list) - the cap is easily saturated by a
+# high-frequency tag like "web"/"frontend" before ever reaching a less-common tag like
+# "3d", which would silently starve skill installation for exactly the projects most
+# likely to want it. Found by testing a package.json with react-three-fiber: the general
+# candidate list was 100% "web"-tagged entries, zero 3d-tagged ones made the top 40.
+skill_install_cap=20
+skills_lib_index="$HOME/.claude/templates/claude-md-os/skills-library/index.json"
+installed_count=0
+if [ -f "$skills_lib_index" ] && command -v jq >/dev/null 2>&1; then
+  lib_root="$HOME/.claude/templates/claude-md-os/skills-library"
+  # jq on Windows/Git Bash emits CRLF; a trailing \r on a skill name would break every
+  # downstream path lookup (a file "name\r" never exists). Same fix pattern already
+  # used throughout run-evals.sh (there via a local strip_cr() helper) for identical
+  # jq-output-on-Windows drift.
+  tags_json="$(printf '%s\n' "${tags[@]}" | jq -R . | jq -s . | tr -d '\r')"
+  to_install=()
+  # Rank by number of matching tags (descending, name ascending as tiebreak) before
+  # capping - see the matching comment in gen-profile-lock.ps1 for why plain alphabetical
+  # index order isn't good enough (a narrow-domain skill matching 2+ of a project's tags
+  # would otherwise lose its slot to a generic single-tag-match skill that sorts earlier).
+  while IFS= read -r nm; do
+    [ -z "$nm" ] && continue
+    [ "${#to_install[@]}" -ge "$skill_install_cap" ] && break
+    to_install+=("$nm")
+  done < <(jq -r --argjson tags "$tags_json" '
+    to_entries
+    | map({key: .key, matches: ((.value.tags // []) as $st | ($tags - ($tags - $st)) | length)})
+    | map(select(.matches > 0))
+    | sort_by([-.matches, .key])
+    | .[].key
+  ' "$skills_lib_index" | tr -d '\r')
+
+  skills_dir="$target/.claude/skills"
+
+  # Prune skills-library-sourced skills that no longer match the current tag set (e.g.
+  # a dependency was removed and "3d" no longer applies). Only removes directories whose
+  # NAME is a known skills-library entry AND not in this run's to_install - a user's own
+  # hand-added skill, or one of the 5 static base skills init copies (neither is a
+  # skills-library index name), is never touched. Without this, re-running gen-profile-lock
+  # (e.g. via apply-os-all --sync) only ever ADDS skills across syncs, silently growing
+  # past the cap's intent as a project's tags drift over time.
+  # KNOWN LIMITATION (accepted, not fixed): pruning is name-based, not provenance-based -
+  # it cannot distinguish "we installed this" from "the user separately created their own
+  # custom skill that happens to share a name with a skills-library catalog entry". That
+  # coincidence would have to be deliberate (matching one of 303 specific names) and is
+  # judged narrow enough not to justify a separate installed-by-us marker file/tracking
+  # mechanism. If this bites in practice, the fix is a small state file listing skill
+  # names this script installed, checked here instead of the raw index membership test.
+  if [ -d "$skills_dir" ]; then
+    for existing_dir in "$skills_dir"/*/; do
+      [ -d "$existing_dir" ] || continue
+      existing_name="$(basename "$existing_dir")"
+      is_lib_name="$(jq -r --arg n "$existing_name" 'has($n)' "$skills_lib_index")"
+      [ "$is_lib_name" != "true" ] && continue
+      keep=0
+      for nm in ${to_install[@]+"${to_install[@]}"}; do [ "$nm" = "$existing_name" ] && keep=1; done
+      [ "$keep" -eq 0 ] && rm -rf "$existing_dir"
+    done
+  fi
+
+  if [ "${#to_install[@]}" -gt 0 ]; then
+    mkdir -p "$skills_dir"
+    for nm in "${to_install[@]}"; do
+      src_md="$lib_root/$nm/SKILL.md"
+      [ -f "$src_md" ] || continue
+      dest_dir="$skills_dir/$nm"
+      mkdir -p "$dest_dir"
+      cp "$src_md" "$dest_dir/SKILL.md"
+      installed_count=$((installed_count + 1))
+    done
+  fi
+fi
+
 echo "PROFILE.lock: $lock"
-echo "  tags: $tags_csv | candidates: $cand_count"
+echo "  tags: $tags_csv | candidates: $cand_count | skills installed: $installed_count"

@@ -21,6 +21,15 @@ $core = Join-Path $env:USERPROFILE ".claude\registry\CORE-300.md"
 if (-not (Test-Path -LiteralPath $core)) { Write-Error "CORE-300.md not found: $core"; exit 1 }
 $total = (Select-String -Path $core -Pattern '^\s*\d+\.').Count
 
+# Stamp the OS version this project was last synced against, so doctor can detect
+# template drift (a project running an older OS version than what's currently in
+# ~/.claude/templates/claude-md-os) without needing a separate marker file.
+$versionFile = Join-Path $env:USERPROFILE ".claude\registry\version.json"
+$osVersion = "unknown"
+if (Test-Path -LiteralPath $versionFile) {
+  try { $osVersion = (Get-Content -LiteralPath $versionFile -Raw | ConvertFrom-Json).version } catch {}
+}
+
 $tags = [System.Collections.Generic.List[string]]::new()
 function Add-Tag($t) { if (-not $tags.Contains($t)) { $tags.Add($t) } }
 
@@ -32,12 +41,14 @@ if (Test-Path "$Target\package.json") {
   if ($pkg -match 'framer-motion|gsap') { Add-Tag "animation" }
   if ($pkg -match '@anthropic|openai|ai-sdk') { Add-Tag "ai" }
   if ($pkg -match 'tailwind|shadcn') { Add-Tag "design" }
+  if ($pkg -match 'telegraf|grammy|@telegram-apps|node-telegram-bot-api|tma\.js') { Add-Tag "telegram" }
 }
 if ((Test-Path "$Target\requirements.txt") -or (Test-Path "$Target\pyproject.toml")) {
   Add-Tag "backend"
   $py = ((Get-Content "$Target\requirements.txt" -Raw -ErrorAction SilentlyContinue), (Get-Content "$Target\pyproject.toml" -Raw -ErrorAction SilentlyContinue)) -join " "
   if ($py -match 'ccxt|backtest|binance|trading') { Add-Tag "trading" }
   if ($py -match 'torch|sklearn|scikit|tensorflow|pandas|numpy') { Add-Tag "ml"; Add-Tag "data" }
+  if ($py -match 'python-telegram-bot|aiogram|pyTelegramBotAPI') { Add-Tag "telegram" }
 }
 if (Get-ChildItem -LiteralPath $Target -Filter *.ps1 -ErrorAction SilentlyContinue | Select-Object -First 1) { Add-Tag "windows" }
 if ((Test-Path "$Target\Dockerfile") -or (Get-ChildItem -LiteralPath $Target -Filter *.tf -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1)) { Add-Tag "infra"; Add-Tag "devops" }
@@ -45,6 +56,8 @@ if ($name -match 'amazon|fba') { Add-Tag "amazon"; Add-Tag "business"; Add-Tag "
 if ($name -match 'seo') { Add-Tag "seo" }
 if ($name -match 'freelance|outreach|strategy|sales|crm') { Add-Tag "sales"; Add-Tag "marketing" }
 if ($name -match 'design') { Add-Tag "design" }
+if ($name -match 'telegram|tg-bot|tgbot|miniapp|mini-app') { Add-Tag "telegram" }
+if ($name -match 'yandex-direct|direct-ads|ppc|adwords|google-ads|meta-ads|paid-ads') { Add-Tag "ppc"; Add-Tag "marketing" }
 if ($tags.Count -eq 0) { Add-Tag "web" }
 
 # --- pull candidates from CORE-300 by tags ---
@@ -69,6 +82,7 @@ $body = New-Object System.Collections.Generic.List[string]
 $body.Add("# PROFILE.lock - cached skill selection for project '$name'")
 $body.Add("")
 $body.Add("Generated $ts by gen-profile-lock.ps1. CACHE: load this instead of grepping CORE-300.md ($total entries) each session = context saving.")
+$body.Add("OS version: $osVersion (see ~/.claude/registry/version.json for the current template version).")
 $body.Add("Principle #1: QUALITY FIRST, economy only at equal quality. Starting set - refine per task; any CORE-300 entry may be called.")
 $body.Add("Model routing: see 80-model-routing.md (G1~Haiku, G2~Sonnet, G3~Opus by required quality).")
 $body.Add("External agents (GH/WSH/VOLT/FTB/EXT) = unvetted until github-research + license check (see 70-skills-registry.md).")
@@ -118,5 +132,87 @@ if (Test-Path -LiteralPath $claudeMd) {
   [System.IO.File]::WriteAllText($claudeMd, $md, $enc2)
 }
 
+# --- Install actual skill content for skills-library-backed candidates (v1.17). CORE-300
+# has 2000+ text-only catalog lines; only a curated subset (srednoff-os/Codex-sibling
+# import, Stage 3) has real installable SKILL.md content in skills-library/. Install up
+# to a hard cap so a project never gets hundreds of skills loaded at session start -
+# Claude Code scans name+description for every installed skill (~100 tokens each) even
+# when unused, so capping here is a real context-budget decision, not cosmetic.
+# Matched independently against skills-library/index.json (not against $cand, the
+# capped-at-40 general text candidate list) - $cand's cap is easily saturated by a
+# high-frequency tag like "web"/"frontend" before ever reaching a less-common tag like
+# "3d", which would silently starve skill installation for exactly the projects most
+# likely to want it. Found by testing a package.json with react-three-fiber: the general
+# candidate list was 100% "web"-tagged entries, zero 3d-tagged ones made the top 40.
+$SkillInstallCap = 20
+$skillsLibIndex = Join-Path $env:USERPROFILE ".claude\templates\claude-md-os\skills-library\index.json"
+$installedCount = 0
+if (Test-Path -LiteralPath $skillsLibIndex) {
+  $libIndex = Get-Content -LiteralPath $skillsLibIndex -Raw | ConvertFrom-Json
+  $tagSet = New-Object System.Collections.Generic.HashSet[string]
+  foreach ($t in $tags) { $tagSet.Add($t) | Out-Null }
+  $libSet = New-Object System.Collections.Generic.HashSet[string]
+  foreach ($prop in $libIndex.PSObject.Properties) { $libSet.Add($prop.Name) | Out-Null }
+
+  # Rank by number of matching tags (descending) before capping, not plain alphabetical
+  # index order. A narrow-domain skill tagged e.g. [marketing][ppc] that matches BOTH of
+  # a project's tags would otherwise lose its slot to a generic single-tag [marketing]
+  # skill purely because that skill's name sorts earlier - found by testing a project
+  # named "yandex-direct-client" (tags: ppc, marketing): yandex-direct-ppc (2 tag matches)
+  # was capped out by 12+ generic growth-/conversion-/landing- skills (1 tag match each)
+  # that happened to sort before it alphabetically.
+  $scored = New-Object System.Collections.Generic.List[object]
+  foreach ($prop in $libIndex.PSObject.Properties) {
+    $skillTags = @($prop.Value.tags)
+    $matchCount = 0
+    foreach ($st in $skillTags) { if ($tagSet.Contains($st)) { $matchCount++ } }
+    if ($matchCount -gt 0) { $scored.Add([pscustomobject]@{ Name = $prop.Name; Matches = $matchCount }) | Out-Null }
+  }
+  $ranked = $scored | Sort-Object -Property @{Expression = "Matches"; Descending = $true}, @{Expression = "Name"; Descending = $false}
+
+  $toInstall = @()
+  foreach ($r in $ranked) {
+    if ($toInstall.Count -ge $SkillInstallCap) { break }
+    if ($toInstall -notcontains $r.Name) { $toInstall += $r.Name }
+  }
+
+  $skillsDir = Join-Path $Target ".claude\skills"
+
+  # Prune skills-library-sourced skills that no longer match the current tag set (e.g.
+  # a dependency was removed and "3d" no longer applies). Only removes directories whose
+  # NAME is a known skills-library entry AND not in this run's $toInstall - a user's own
+  # hand-added skill, or one of the 5 static base skills init copies (neither is a
+  # skills-library index name), is never touched. Without this, re-running gen-profile-lock
+  # (e.g. via apply-os-all -Sync) only ever ADDS skills across syncs, silently growing
+  # past the cap's intent as a project's tags drift over time.
+  # KNOWN LIMITATION (accepted, not fixed): pruning is name-based, not provenance-based -
+  # it cannot distinguish "we installed this" from "the user separately created their own
+  # custom skill that happens to share a name with a skills-library catalog entry". That
+  # coincidence would have to be deliberate (matching one of 303 specific names) and is
+  # judged narrow enough not to justify a separate installed-by-us marker file/tracking
+  # mechanism. If this bites in practice, the fix is a small state file listing skill
+  # names this script installed, checked here instead of the raw index membership test.
+  if (Test-Path -LiteralPath $skillsDir) {
+    Get-ChildItem -LiteralPath $skillsDir -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+      if ($libSet.Contains($_.Name) -and ($toInstall -notcontains $_.Name)) {
+        Remove-Item -LiteralPath $_.FullName -Recurse -Force
+      }
+    }
+  }
+
+  if ($toInstall.Count -gt 0) {
+    New-Item -ItemType Directory -Force -Path $skillsDir | Out-Null
+    $libRoot = Join-Path $env:USERPROFILE ".claude\templates\claude-md-os\skills-library"
+    foreach ($nm in $toInstall) {
+      $srcMd = Join-Path $libRoot "$nm\SKILL.md"
+      if (-not (Test-Path -LiteralPath $srcMd)) { continue }
+      $destDir = Join-Path $skillsDir $nm
+      New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+      Copy-Item -LiteralPath $srcMd -Destination (Join-Path $destDir "SKILL.md") -Force
+      $installedCount++
+    }
+  }
+}
+
 Write-Host "PROFILE.lock: $lock" -ForegroundColor Green
-Write-Host ("  tags: {0} | candidates: {1}" -f ($tags -join ','), $cand.Count)
+Write-Host ("  tags: {0} | candidates: {1} | skills installed: {2}" -f ($tags -join ','), $cand.Count, $installedCount)
