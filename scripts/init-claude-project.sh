@@ -2,21 +2,37 @@
 set -euo pipefail
 
 # Initialize Claude MD OS files into a target project.
-# - Never overwrites silently: existing files backed up as <file>.bak.<timestamp>.
+# - Only ever ships the OS's project-bootstrap surface (CLAUDE.md, code_review.md, AGENTS.md,
+#   .claude/rules|skills|commands|hooks, .claude/settings*.example.json, .agent/**). The OS
+#   repo's own about-itself files (README*, LICENSE, .gitignore, QUALITY.md, RELEASE.md,
+#   docs/**, benchmarks/**, registry/**, skills-library/**) are NEVER copied into a target
+#   project - a consumer project has no use for them, and registry/skills-library are meant
+#   to be consumed via the ~/.claude/registry symlink, not duplicated per project.
+# - Never overwrites a file that is already tracked in the target's own git history and
+#   differs from the template: it is left untouched and reported, not backed-up-and-clobbered.
+#   A .bak file is not consent. Pass --force to opt back into the old backup+overwrite
+#   behavior for tracked files that differ (for a human who really wants the template's copy).
+# - Untracked existing files that differ still get the old backup+overwrite treatment (they
+#   were never confirmed as someone's committed work).
 # - Never deletes anything.
 # - Never creates an active .claude/settings.json (only settings.example.json).
 # --skip-existing-claude-md: if the project already has its own CLAUDE.md, leave it
 #   completely untouched (do not back up or replace). Matches -SkipExistingClaudeMd in
 #   init-claude-project.ps1.
+# --force: overwrite existing git-tracked files that differ from the template instead of
+#   skipping them (still backs them up first). Opt-in only; not passed by the automated
+#   SessionStart auto-apply path.
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 template_root="$(cd "$script_dir/.." && pwd)"
 
 target="."
 skip_existing_claude_md=0
+force=0
 for arg in "$@"; do
   case "$arg" in
     --skip-existing-claude-md) skip_existing_claude_md=1 ;;
+    --force) force=1 ;;
     *) target="$arg" ;;
   esac
 done
@@ -49,18 +65,24 @@ echo "  Template: $template_root"
 echo "  Target:   $target"
 echo ""
 
-created=0; updated=0; skipped=0; preserved=0
+created=0; updated=0; skipped=0; preserved=0; kept_tracked=0
 
-# Walk all template files except scripts/ and any settings.json
+target_is_git_repo=0
+git -C "$target" rev-parse --is-inside-work-tree >/dev/null 2>&1 && target_is_git_repo=1
+
+# Walk template files, but only ship the project-bootstrap allow-list. Everything else in
+# the template (README*, LICENSE, .gitignore, QUALITY.md, RELEASE.md, docs/, benchmarks/,
+# registry/, skills-library/, scripts/, .git/, .github/, .claude-plugin/, top-level hooks/,
+# .claude/settings.json) is the OS repo's own tooling/about-itself content and is never
+# copied into a target project.
 while IFS= read -r -d '' f; do
   rel="${f#$template_root/}"
   case "$rel" in
-    scripts/*) continue ;;
-    .git/*) continue ;;              # the template's OWN git history, never project content
-    .github/*) continue ;;           # CI workflows are repo tooling, not project content
-    .claude-plugin/*) continue ;;    # plugin distribution manifests, not project content
-    hooks/*) continue ;;             # plugin hook wiring (the per-project hooks live in .claude/hooks/)
-    .claude/settings.json) continue ;;
+    CLAUDE.md|code_review.md|AGENTS.md) ;;
+    .claude/rules/*|.claude/skills/*|.claude/commands/*|.claude/hooks/*) ;;
+    .claude/settings.example.json|.claude/settings.windows.example.json) ;;
+    .agent/*) ;;
+    *) continue ;;
   esac
 
   if [ "$skip_existing_claude_md" -eq 1 ] && [ "$rel" = "CLAUDE.md" ] && [ -f "$target/CLAUDE.md" ]; then
@@ -77,10 +99,19 @@ while IFS= read -r -d '' f; do
       echo "  = $rel"
       skipped=$((skipped+1))
     else
-      cp -f "$dest" "$dest.bak.$stamp"
-      cp -f "$f" "$dest"
-      echo "  ~ $rel  (backup: $(basename "$dest.bak.$stamp"))"
-      updated=$((updated+1))
+      tracked=0
+      if [ "$force" -ne 1 ] && [ "$target_is_git_repo" -eq 1 ]; then
+        git -C "$target" ls-files --error-unmatch -- "$rel" >/dev/null 2>&1 && tracked=1
+      fi
+      if [ "$tracked" -eq 1 ]; then
+        echo "  ! $rel  (kept - existing file is tracked in your git history and differs from the template; pass --force to overwrite)"
+        kept_tracked=$((kept_tracked+1))
+      else
+        cp -f "$dest" "$dest.bak.$stamp"
+        cp -f "$f" "$dest"
+        echo "  ~ $rel  (backup: $(basename "$dest.bak.$stamp"))"
+        updated=$((updated+1))
+      fi
     fi
   else
     cp -f "$f" "$dest"
@@ -90,7 +121,7 @@ while IFS= read -r -d '' f; do
 done < <(find "$template_root" -type f -print0)
 
 echo ""
-echo "Created: $created  Updated: $updated  Skipped: $skipped  Preserved: $preserved"
+echo "Created: $created  Updated: $updated  Skipped: $skipped  Preserved: $preserved  Kept (tracked, differs): $kept_tracked"
 echo ""
 echo "Hooks are NOT active. To enable them:"
 echo "  cp .claude/settings.example.json .claude/settings.json"
