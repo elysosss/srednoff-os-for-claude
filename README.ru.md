@@ -129,7 +129,7 @@ flowchart TD
 Две команды, без копирования файлов и ручной правки `settings.json`:
 
 ```
-/plugin marketplace add srednoff888-art/srednoff-os-for-claude
+/plugin marketplace add elysosss/srednoff-os-for-claude
 /plugin install srednoff-os
 ```
 

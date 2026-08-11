@@ -129,7 +129,7 @@ flowchart TD
 Two commands, no file copying, no manual `settings.json` editing:
 
 ```
-/plugin marketplace add srednoff888-art/srednoff-os-for-claude
+/plugin marketplace add elysosss/srednoff-os-for-claude
 /plugin install srednoff-os
 ```
 
