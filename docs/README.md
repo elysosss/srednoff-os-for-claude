@@ -12,6 +12,7 @@ portal; content rewritten to describe what this repository actually contains and
 | [Security](security.md) | Hook posture, decision contract, redacted audit trail, provenance gates |
 | [Workflows](workflows.md) | Daily project workflow, sync/refresh, release checkpoint, TURBO boundaries |
 | [Validation](validation.md) | Local and CI gates, doctor checks, evidence table |
+| [Rules directory](rules.md) | What each of the ten always-loaded rules covers, path-scoping, what is loaded vs read on demand |
 
 ## Documentation Principles
 
