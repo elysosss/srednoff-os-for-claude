@@ -9,9 +9,11 @@
 
 ## Vercel
 - deployments; logs; env vars; preview URLs; build diagnostics.
+- production (env vars, домены, деплой) не менять без подтверждения.
 
 ## Supabase
 - schema; migrations; RLS; auth; storage; edge functions; logs.
+- не удалять данные и не отключать RLS без подтверждения.
 
 ## Figma / Canva
 - UI references; design systems; assets; visual direction.
