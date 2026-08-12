@@ -48,6 +48,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: PowerShell encoding guard (*.ps1 must be pure ASCII, or carry a UTF-8 BOM)
+        # PowerShell 5.1 decodes a BOM-less script using the system ANSI codepage while
+        # pwsh 7 and Linux/macOS assume UTF-8, so one literal em-dash in a string broke a
+        # script into seven parse errors that named nothing relevant. The parse check in the
+        # windows-powershell job catches the symptom; this catches the cause, and runs here
+        # so a Linux-only contributor gets the same answer without a Windows runner.
+        run: bash scripts/validate-ps1-encoding.sh
       - name: Reconstruct the ~/.claude layout the scripts expect
         run: |
           mkdir -p "$HOME/.claude/templates/claude-md-os" "$HOME/.claude/registry"
@@ -164,6 +171,15 @@ jobs:
     # shell on windows-latest is 5.1, not pwsh 7) against the ~/.claude layout the scripts expect.
     steps:
       - uses: actions/checkout@v5
+      - name: Packaging guards (PowerShell ports of the exec-bit and encoding checks)
+        # Both checks already ran on ubuntu; running the .ps1 ports here is what keeps the
+        # two implementations from drifting apart, on the platform that is meant to need no
+        # dependencies. The exec-bit one is deliberately not Linux-only: Windows is where the
+        # bit gets dropped, so this is where the answer is worth surfacing.
+        shell: powershell
+        run: |
+          & ".\scripts\validate-exec-bits.ps1"; if ($LASTEXITCODE -ne 0) { throw "exec-bit guard failed" }
+          & ".\scripts\validate-ps1-encoding.ps1"; if ($LASTEXITCODE -ne 0) { throw "ps1 encoding guard failed" }
       - name: Reconstruct the ~/.claude layout
         shell: powershell
         run: |
