@@ -10,7 +10,7 @@ function Get-Sha256Hex {
 }
 
 # Privacy-safe audit trail: logs ONLY when something is flagged (secret/dangerous pattern),
-# not every tool call — keeps the log meaningful instead of a firehose. Stores a sha256 of
+# not every tool call - keeps the log meaningful instead of a firehose. Stores a sha256 of
 # the raw hook input, never the input itself, so no secret content ever lands on disk here.
 function Write-HookLedger {
   param(
