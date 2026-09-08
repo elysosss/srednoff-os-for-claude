@@ -29,7 +29,8 @@ flowchart LR
 |---|---|---|
 | Entrypoint | `CLAUDE.md` | Yes, every session |
 | Core rules | `.claude/rules/00-90` (10 files) | Yes, every session - cross-cutting, no `paths:` scoping |
-| Project-added rules | `.claude/rules/*` beyond 00-90 | Only when `paths:` glob matches the file being touched (native Claude Code feature) |
+| Project-added rules | `.claude/rules/*` beyond 00-90 | With a `paths:` field, only when its glob matches the file being touched (native Claude Code feature); without one, every session - any file in the directory is loaded, whatever it is named, which is why the rules-directory doc lives in [rules.md](rules.md) instead |
+| Extended references | `.agent/*` | No - read on demand only, so a rule and its longer `.agent/` version are not context duplication |
 | Skill definitions (base) | `.claude/skills/*/SKILL.md` (5) | Auto-discovered, name+description scanned at session start |
 | Skill library (curated, 303) | `templates/claude-md-os/skills-library/*/SKILL.md` | No - `gen-profile-lock` installs a capped, tag-matched subset into a project's `.claude/skills/` |
 | Text catalog (~1700 records) | `registry/CORE-300.md` | No - grep/reference only, no installable content |
