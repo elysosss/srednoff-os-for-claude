@@ -121,8 +121,6 @@ For multi-step interactions (registration, forms, wizards), maintain conversatio
 - **Node.js**: Use a `Map` or Redis to track `{ step, data }` per `chatId`
 - **Python**: Use `ConversationHandler` from `python-telegram-bot` (built-in state machine)
 
-See `reference/patterns_and_examples.md` for complete conversation flow implementations.
-
 ### Error Handling
 
 Handle common error scenarios:
@@ -195,8 +193,6 @@ echo "BOT_TOKEN=your_token_here" > .env
 - **Serverless**: Webhook handler as Vercel/AWS Lambda function
 - **VPS**: Direct deployment with systemd service
 
-See `reference/patterns_and_examples.md` for Docker, PM2, and serverless deployment configurations.
-
 ## Security Checklist
 
 - Store `BOT_TOKEN` in environment variables
@@ -207,12 +203,9 @@ See `reference/patterns_and_examples.md` for Docker, PM2, and serverless deploym
 - Use HTTPS for all webhook endpoints
 - Restrict `allowed_updates` to only needed types
 
-## Reference Files
+## Full API Reference
 
-For detailed API documentation and implementation patterns, consult:
-
-- **[`reference/api_methods.md`](./reference/api_methods.md)** - Complete list of 100+ Bot API methods organized by category (messaging, chat management, stickers, payments, inline mode, games, forum topics, gifts, passport, and more)
-- **[`reference/api_types.md`](./reference/api_types.md)** - Complete list of 200+ Bot API types with all fields (Update, Message, Chat, User, keyboards, media types, payment types, chat members, reactions, and more)
-- **[`reference/patterns_and_examples.md`](./reference/patterns_and_examples.md)** - Production-ready implementation patterns for Node.js and Python including: inline keyboards, webhooks, media handling, conversation state management, database integration, admin panels, multi-language support, Docker/PM2/serverless deployment, Telegram Stars payments, and inline mode
-
-When building a bot, start with SKILL.md for core concepts, then load the appropriate reference file for detailed API information or implementation patterns as needed.
+This skill covers the core concepts and the methods and types reached for most often. For
+the exhaustive list - every Bot API method, every type and field, and the per-version
+changelog - consult the official reference at https://core.telegram.org/bots/api, which is
+authoritative and kept current with each Bot API release.

@@ -55,7 +55,7 @@ jobs:
         run: bash "$HOME/.claude/registry/audit-registry.sh"
       - name: Catalog JSON export drift gate (CORE-300.json must match CORE-300.md)
         run: bash "$HOME/.claude/registry/gen-catalog-json.sh" --check
-      - name: Skills-library metadata smoke check (name/description/frontmatter validity)
+      - name: Skills-library smoke check (frontmatter validity + links resolve to shipped files)
         run: bash "$HOME/.claude/templates/claude-md-os/scripts/validate-skills-library.sh"
       - name: Docs portal validation (required docs present, no TODO markers, all linked)
         run: bash "$HOME/.claude/templates/claude-md-os/scripts/validate-docs.sh"
