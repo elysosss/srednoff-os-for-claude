@@ -22,9 +22,19 @@ deny() {
 
 fp="$(printf '%s' "$raw" | jq -r '.tool_input.file_path // .tool_input.path // .tool_input.notebook_path // empty' 2>/dev/null || true)"
 
-secret_path_pattern='(^|[\\/])\.env(\.|$)|id_rsa|id_ed25519|\.pem$|\.key$|secrets?\.(json|ya?ml|toml)$|credentials(\.json)?$'
-if [ -n "$fp" ] && printf '%s' "$fp" | srednoff_grep_pcre "$secret_path_pattern"; then
+# Path rules (and the allow-list of committed-on-purpose names) live in hook-lib.sh so
+# run-evals.sh can test them; see the comments there for why each name is allowed.
+if is_secret_path "$fp"; then
   deny "Secret-like file path blocked by SREDNOFF OS hook. Ask the user for explicit approval; use a redacted approach." "secret_path"
+elif is_secret_path_allowlisted "$fp"; then
+  # The NAME is allowed (.env.example and friends), the CONTENT is not: a real key
+  # committed into a template is still a leak, and on Read there is no tool_input to
+  # scan, so check the file on disk.
+  disk_hits=(); while IFS= read -r _line; do disk_hits+=("$_line"); done < <(scan_path_content_on_disk "$fp")
+  if [ "${#disk_hits[@]}" -gt 0 ]; then
+    disk_str="$(IFS=,; echo "${disk_hits[*]}")"
+    deny "$fp is normally safe to read/edit, but it currently contains what looks like a real secret ($disk_str). Blocked by SREDNOFF OS hook - replace the value with a placeholder." "${disk_hits[@]}"
+  fi
 fi
 
 # Content-based check: catches a secret being written into an otherwise-innocuous file
