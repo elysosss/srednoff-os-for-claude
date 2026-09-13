@@ -23336,7 +23336,193 @@
       "source_raw": "GH:Telegram-Mini-Apps/nextjs-template",
       "group": "G2",
       "description": "Official Telegram Mini Apps starter: Next.js + TypeScript + TON Connect + @telegram-apps/sdk (tma.js). Project-starter template, not an instructional skill (same pattern as vibe-template-web). Official Telegram-Mini-Apps org, 370★; no LICENSE file detected - verify terms before commercial use. Verified 27.07.2026."
+    },
+    {
+      "id": 2039,
+      "name": "python-typing-and-mypy-strictness",
+      "tags": [
+        "backend"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Python type hints, generics, Protocol, TypedDict, overloads, and strict mypy or pyright configuration, including gradual typing of untyped legacy modules. Trigger when the task involves programming work related to Python Typing And Mypy Strictness, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2040,
+      "name": "python-async-await-patterns",
+      "tags": [
+        "backend",
+        "perf"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for asyncio design and repair - TaskGroup, structured concurrency, cancellation and timeouts, blocking calls inside the event loop, and the deadlocks they cause. Trigger when the task involves programming work related to Python Async Await Patterns, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2041,
+      "name": "python-packaging-pyproject-poetry-uv",
+      "tags": [
+        "backend"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Python dependency management and release: pyproject.toml metadata, uv or Poetry workflows, lock files, reproducible environments, version constraints, and publishing to an index with trusted publishing. Trigger when the task involves programming work related to Python Packaging Pyproject Poetry Uv, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2042,
+      "name": "python-dataclasses-pydantic-validation",
+      "tags": [
+        "backend",
+        "data"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Python data modeling and input validation - Pydantic v2 models, validators and settings, dataclasses versus attrs, request and config schema design, serialization, and clear validation errors. Trigger when the task involves programming work related to Python Dataclasses Pydantic Validation, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2043,
+      "name": "pytest-fixtures-and-parametrization",
+      "tags": [
+        "test"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for pytest structure and mechanics - fixture scope and teardown, conftest layering, parametrize and ids, markers and selection, monkeypatch, and plugin choices for slow or flaky suites. Trigger when the task involves programming work related to Pytest Fixtures And Parametrization, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2044,
+      "name": "python-profiling-cprofile-pyspy",
+      "tags": [
+        "perf",
+        "backend"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill to profile Python CPU and wall-clock time with cProfile, py-spy, and flame graphs - choosing the right profiler, sampling a live production process, and reading the output before optimizing anything. Trigger when the task involves programming work related to Python Profiling Cprofile Pyspy, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2045,
+      "name": "memory-leak-detection-python",
+      "tags": [
+        "perf",
+        "backend"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill when a Python process grows in RSS without bound - tracemalloc snapshots, objgraph reference chains, gc diagnostics, reference cycles, caches that never evict, and native allocations that never return to the OS. Trigger when the task involves programming work related to Memory Leak Detection Python, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2046,
+      "name": "legacy-python-codebase-modernization",
+      "tags": [
+        "backend",
+        "quality"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill to modernize an aging Python codebase in stages - raising the minimum interpreter version, replacing abandoned dependencies, introducing typing and linting on a ratchet, and retiring dead code with evidence. Trigger when the task involves programming work related to Legacy Python Codebase Modernization, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2047,
+      "name": "python-debugger-pdb-production-debugging",
+      "tags": [
+        "backend",
+        "quality"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for hands-on Python debugging - pdb and ipdb sessions, breakpoint and post-mortem workflows, faulthandler and signal dumps, attaching to a stuck or remote process, and reconstructing a production incident from a traceback. Trigger when the task involves programming work related to Python Debugger Pdb Production Debugging, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2048,
+      "name": "structured-logging-python",
+      "tags": [
+        "backend",
+        "ops"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Python logging configuration and structured JSON output - stdlib logging versus structlog, contextvars for request correlation, log levels that mean something, exception logging, and rules for what must never be logged. Trigger when the task involves programming work related to Structured Logging Python, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2049,
+      "name": "sqlalchemy-orm-patterns",
+      "tags": [
+        "backend",
+        "data"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for SQLAlchemy 2.0 ORM work: session lifecycle, unit of work boundaries, relationship loading strategies, and N+1 query elimination. Trigger when the task involves declarative models, repository or service layers, slow ORM-backed endpoints, detached instance errors, or a move from legacy Query API to 2.0 select() style."
+    },
+    {
+      "id": 2050,
+      "name": "alembic-migration-workflows",
+      "tags": [
+        "data"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Alembic migration workflows: autogenerate review, revision branching and merges, downgrade paths, data migrations, and zero-downtime rollout ordering. Trigger when a revision must be authored or reviewed, autogenerate produced a suspicious diff, heads have diverged after a merge, or a schema change must ship without taking the application offline."
+    },
+    {
+      "id": 2051,
+      "name": "dockerfile-best-practices-python",
+      "tags": [
+        "infra",
+        "backend"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for authoring and reviewing Python Dockerfiles: multi-stage builds, layer ordering and cache hits, non-root runtime users, image size reduction, and .dockerignore hygiene. Trigger when a Python service needs a container image, an existing image is oversized or rebuilds slowly, or a review flags a container running as root."
+    },
+    {
+      "id": 2052,
+      "name": "docker-compose-local-dev-environments",
+      "tags": [
+        "infra"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Docker Compose local development environments: service healthchecks, dependency ordering, volumes for code and data, environment variables driven by a checked-in .env.example, and optional profiles. Trigger when a repository needs a one-command local stack, when services start before their dependencies are ready, or when onboarding a new developer breaks on missing configuration."
+    },
+    {
+      "id": 2053,
+      "name": "kubernetes-deployment-manifests-basics",
+      "tags": [
+        "infra"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for writing and reviewing core Kubernetes manifests: Deployment, Service, ConfigMap and Secret, readiness and liveness probes, resource requests and limits, and rollout plus rollback control. Trigger when a service needs its first manifests, when pods restart or never become ready, when a rollout stalls, or when a release must be rolled back."
+    },
+    {
+      "id": 2054,
+      "name": "github-actions-python-ci-pipeline",
+      "tags": [
+        "devops",
+        "cicd"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for GitHub Actions CI on Python projects: a version matrix, dependency caching, lint, typecheck and test as separate steps, and artifact upload. Trigger when a Python repository needs a CI workflow, when the pipeline is slow because dependencies reinstall every run, when failures are hard to attribute to a stage, or when coverage and build artifacts must be published from CI."
     }
   ],
-  "count": 2037
+  "count": 2053
 }
