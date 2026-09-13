@@ -24,6 +24,8 @@ $SecretPathFixtures = Join-Path $Registry "evals\secret-path-fixtures.json"
 $SourceRankerFixtures = Join-Path $Registry "evals\source-ranker-fixtures.json"
 $SourceRanker = Join-Path $Registry "source-ranker.ps1"
 $HookLib = Join-Path $env:USERPROFILE ".claude\templates\claude-md-os\.claude\hooks\hook-lib.ps1"
+$ProfileTagFixtures = Join-Path $Registry "evals\profile-tag-fixtures.json"
+$GenProfileLock = Join-Path $env:USERPROFILE ".claude\templates\claude-md-os\scripts\gen-profile-lock.ps1"
 
 $results = New-Object System.Collections.Generic.List[object]
 
@@ -50,6 +52,35 @@ if ((Test-Path -LiteralPath $SecretPathFixtures) -and (Test-Path -LiteralPath $H
     $got = Test-SecretPath -Path $f.path
     $pass = ($got -eq $f.expectMatch)
     $results.Add([pscustomobject]@{ suite = "secret-path"; id = $f.id; pass = $pass; expected = "deny=$($f.expectMatch)"; got = "deny=$got" }) | Out-Null
+  }
+}
+
+# Project-classification regression. gen-profile-lock's heuristic decides which skills a
+# project gets, but its only observable output used to be the PROFILE.lock it writes, so
+# nothing tested it - a Python repo came out tagged `backend` and nothing else and no one
+# noticed. -PrintTags exists to make it testable; each fixture builds a throwaway project
+# tree and asserts the exact tag set.
+if ((Test-Path -LiteralPath $ProfileTagFixtures) -and (Test-Path -LiteralPath $GenProfileLock)) {
+  $fixtures = Get-Content -LiteralPath $ProfileTagFixtures -Raw | ConvertFrom-Json
+  foreach ($f in $fixtures) {
+    $tmpProj = Join-Path ([System.IO.Path]::GetTempPath()) ("srednoff-eval-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Force -Path $tmpProj | Out-Null
+    foreach ($rel in $f.files) {
+      $full = Join-Path $tmpProj ($rel -replace '/', '\')
+      if ($rel.EndsWith("/")) {
+        New-Item -ItemType Directory -Force -Path $full | Out-Null
+      } else {
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $full) | Out-Null
+        New-Item -ItemType File -Force -Path $full | Out-Null
+      }
+    }
+    $gotRaw = & powershell -NoProfile -ExecutionPolicy Bypass -File $GenProfileLock -ProjectPath $tmpProj -PrintTags 2>$null
+    Remove-Item -Recurse -Force -LiteralPath $tmpProj -ErrorAction SilentlyContinue
+    # Order-insensitive exact set comparison.
+    $gotSorted = (($gotRaw -split ',' | Where-Object { $_ } | Sort-Object) -join ',')
+    $expSorted = ((@($f.expectedTags) | Sort-Object) -join ',')
+    $pass = ($gotSorted -eq $expSorted)
+    $results.Add([pscustomobject]@{ suite = "profile-tags"; id = $f.id; pass = $pass; expected = $expSorted; got = $gotSorted }) | Out-Null
   }
 }
 

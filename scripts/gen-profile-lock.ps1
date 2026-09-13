@@ -12,14 +12,18 @@
   Project folder (default: current).
 #>
 [CmdletBinding()]
-param([Parameter(Position = 0)][string]$ProjectPath = ".")
+# -PrintTags classifies the project and prints the dominant tags, then exits without
+# writing anything and without needing the registry. It exists so the classifier can be
+# regression-tested (evals/profile-tag-fixtures.json) instead of only being observable
+# through the PROFILE.lock it produces.
+param([Parameter(Position = 0)][string]$ProjectPath = ".", [switch]$PrintTags)
 
 $ErrorActionPreference = "Stop"
 $Target = (Resolve-Path -LiteralPath $ProjectPath).Path
 $name = Split-Path -Leaf $Target
 $core = Join-Path $env:USERPROFILE ".claude\registry\CORE-300.md"
-if (-not (Test-Path -LiteralPath $core)) { Write-Error "CORE-300.md not found: $core"; exit 1 }
-$total = (Select-String -Path $core -Pattern '^\s*\d+\.').Count
+if (-not $PrintTags -and -not (Test-Path -LiteralPath $core)) { Write-Error "CORE-300.md not found: $core"; exit 1 }
+$total = if (Test-Path -LiteralPath $core) { (Select-String -Path $core -Pattern '^\s*\d+\.').Count } else { 0 }
 
 # Stamp the OS version this project was last synced against, so doctor can detect
 # template drift (a project running an older OS version than what's currently in
@@ -51,7 +55,26 @@ if ((Test-Path "$Target\requirements.txt") -or (Test-Path "$Target\pyproject.tom
   if ($py -match 'python-telegram-bot|aiogram|pyTelegramBotAPI') { Add-Tag "telegram" }
 }
 if (Get-ChildItem -LiteralPath $Target -Filter *.ps1 -ErrorAction SilentlyContinue | Select-Object -First 1) { Add-Tag "windows" }
-if ((Test-Path "$Target\Dockerfile") -or (Get-ChildItem -LiteralPath $Target -Filter *.tf -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1)) { Add-Tag "infra"; Add-Tag "devops" }
+# Python toolchain signals the manifest alone does not carry. A Python repo used to come
+# out tagged backend and nothing else, so a project full of pytest suites and Alembic
+# migrations never matched a single [test] or [data] skill.
+if ((Test-Path "$Target\pytest.ini") -or (Test-Path "$Target\tox.ini") -or (Test-Path "$Target\conftest.py") -or
+    (Test-Path "$Target\tests") -or (Test-Path "$Target\test")) { Add-Tag "test" }
+if ((Test-Path "$Target\alembic.ini") -or (Test-Path "$Target\alembic") -or (Test-Path "$Target\migrations") -or
+    (Test-Path "$Target\prisma\schema.prisma") -or
+    (Get-ChildItem -LiteralPath $Target -Filter *.sql -Depth 1 -File -ErrorAction SilentlyContinue | Select-Object -First 1)) { Add-Tag "data" }
+# Django puts its entrypoint here and nowhere else.
+if (Test-Path "$Target\manage.py") { Add-Tag "backend"; Add-Tag "web" }
+
+# Infra was detected only by a root Dockerfile or any *.tf, which misses most real
+# deployments: compose-only local stacks, k8s manifests, Helm charts.
+if ((Test-Path "$Target\Dockerfile") -or (Test-Path "$Target\docker-compose.yml") -or (Test-Path "$Target\docker-compose.yaml") -or
+    (Test-Path "$Target\compose.yml") -or (Test-Path "$Target\compose.yaml") -or
+    (Test-Path "$Target\k8s") -or (Test-Path "$Target\kubernetes") -or (Test-Path "$Target\helm") -or (Test-Path "$Target\charts") -or
+    (Get-ChildItem -LiteralPath $Target -Filter *.tf -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1)) { Add-Tag "infra"; Add-Tag "devops" }
+# A pipeline definition is a devops signal on its own, whatever the stack is.
+if ((Test-Path "$Target\.github\workflows") -or (Test-Path "$Target\.gitlab-ci.yml") -or
+    (Test-Path "$Target\Jenkinsfile") -or (Test-Path "$Target\.circleci\config.yml")) { Add-Tag "devops"; Add-Tag "cicd" }
 if ($name -match 'amazon|fba') { Add-Tag "amazon"; Add-Tag "business"; Add-Tag "marketing" }
 if ($name -match 'seo') { Add-Tag "seo" }
 if ($name -match 'freelance|outreach|strategy|sales|crm') { Add-Tag "sales"; Add-Tag "marketing" }
@@ -59,6 +82,8 @@ if ($name -match 'design') { Add-Tag "design" }
 if ($name -match 'telegram|tg-bot|tgbot|miniapp|mini-app') { Add-Tag "telegram" }
 if ($name -match 'yandex-direct|direct-ads|ppc|adwords|google-ads|meta-ads|paid-ads') { Add-Tag "ppc"; Add-Tag "marketing" }
 if ($tags.Count -eq 0) { Add-Tag "web" }
+
+if ($PrintTags) { Write-Output ($tags -join ","); exit 0 }
 
 # --- pull candidates from CORE-300 by tags ---
 $pattern = ($tags | ForEach-Object { "\[$_\]" }) -join "|"
