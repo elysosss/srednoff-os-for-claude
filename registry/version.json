@@ -3,8 +3,8 @@
   "version": "v1.20",
   "released_at": "2026-07-27",
   "baseline": {
-    "kernel_records": 2053,
-    "installable_skills": 325,
+    "kernel_records": 2062,
+    "installable_skills": 326,
     "principle": "quality-first-economy-tiebreaker"
   },
   "features": [

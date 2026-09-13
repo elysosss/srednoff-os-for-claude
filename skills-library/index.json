@@ -1243,6 +1243,13 @@
       "frontend"
     ]
   },
+  "no-ai-slop": {
+    "path": "skills-library/no-ai-slop/SKILL.md",
+    "tags": [
+      "docs",
+      "quality"
+    ]
+  },
   "no-code-low-code-agent": {
     "path": "skills-library/no-code-low-code-agent/SKILL.md",
     "tags": [
