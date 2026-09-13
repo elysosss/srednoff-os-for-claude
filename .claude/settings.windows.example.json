@@ -5,19 +5,28 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/block-dangerous-bash.ps1" }
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/block-dangerous-bash.ps1"
+          }
         ]
       },
       {
         "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/protect-secrets.ps1" }
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/protect-secrets.ps1"
+          }
         ]
       },
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/require-profile-lock-read.ps1" }
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/require-profile-lock-read.ps1"
+          }
         ]
       }
     ],
@@ -25,14 +34,28 @@
       {
         "matcher": "Read",
         "hooks": [
-          { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/mark-profile-lock-read.ps1" }
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/mark-profile-lock-read.ps1"
+          }
         ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [
-          { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/scan-prompt-secrets.ps1" }
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/scan-prompt-secrets.ps1"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/delegation-reminder.ps1"
+          }
         ]
       }
     ],
@@ -40,7 +63,10 @@
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/quality-reminder.ps1" }
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/quality-reminder.ps1"
+          }
         ]
       }
     ]

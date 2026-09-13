@@ -34,3 +34,18 @@ chmod +x .claude/hooks/*.sh
 - `mark-profile-lock-read.ps1` / `.sh` — PostToolUse(Read): пишет маркер сессии (`~/.claude/logs/session-state/{session_id}/profile-lock-read.marker`), когда прочитан `PROFILE.lock.md` или `CORE-300.md`. Компаньон предыдущего хука, без него гейт не снимается.
 
 **Audit ledger:** все denies/blocks пишутся в `~/.claude/logs/hook-events.jsonl` (timestamp, хук, решение, находки, **sha256 сырого инпута** — не сам секрет). Логируются только сработавшие события, не каждый вызов — иначе журнал раздувается без пользы. Формат ledger одинаковый у `.ps1` и `.sh` версий (можно смешивать хосты и читать один общий журнал).
+
+## delegation-reminder (UserPromptSubmit, informational)
+
+Injects the delegation checklist from `90-subagent-contract.md` into context on every prompt.
+Decides nothing and blocks nothing - it only makes the triggers visible at the moment work is
+being planned, instead of once at session start.
+
+The rule states the *contract* for a delegated call (goal, boundaries, output limit, final
+disposition); it does not say when delegating is the right move at all. A one-time instruction
+is exactly the passive signal that `70-skills-registry.md` documents as unreliable - so this is
+the same answer that file already reaches, applied to a different problem, with the honest
+caveat that only a `PreToolUse` hook can actually deny.
+
+Dependency-free on purpose: no `jq`, no `grep -P`, no `hook-lib`. It cannot fail open the way
+the scanning hooks can, because it makes no decision.
