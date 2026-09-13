@@ -4,16 +4,28 @@
   Initialize Claude MD OS files into a target project (Windows / PowerShell).
 .DESCRIPTION
   Copies the Claude MD OS template package into the given project directory.
-  - Never overwrites silently: existing files are backed up as <file>.bak.<timestamp>.
+  - Only ever ships the OS's project-bootstrap surface (CLAUDE.md, code_review.md, AGENTS.md,
+    .claude/rules|skills|commands|hooks, .claude/settings*.example.json, .agent/**). The OS
+    repo's own about-itself files (README*, LICENSE, .gitignore, QUALITY.md, RELEASE.md,
+    docs/**, benchmarks/**, registry/**, skills-library/**) are NEVER copied into a target
+    project - registry/skills-library are meant to be consumed via the global registry
+    symlink/install, not duplicated per project.
+  - Never overwrites a file already tracked in the target's own git history that differs
+    from the template: it is left untouched and reported, not backed-up-and-clobbered.
+    Pass -Force to opt back into backup+overwrite for tracked files that differ.
+  - Untracked existing files that differ still get the old backup+overwrite treatment.
   - Never deletes anything.
   - Never creates an active .claude/settings.json (only settings.example.json is copied).
-  - Reports created / updated(backed up) / skipped files.
+  - Reports created / updated(backed up) / skipped / kept(tracked) files.
 .PARAMETER ProjectPath
   Target project directory. Defaults to current directory.
 .PARAMETER SkipExistingClaudeMd
   If the project already has its own CLAUDE.md, leave it completely untouched
   (do not back up or replace). Use this when rolling the OS into existing projects
   that have a tailored CLAUDE.md you want to keep active.
+.PARAMETER Force
+  Overwrite existing git-tracked files that differ from the template instead of skipping
+  them (still backs them up first). Opt-in only.
 .EXAMPLE
   .\init-claude-project.ps1 .
   .\init-claude-project.ps1 "C:\my-workspace\my-nextjs-app"
@@ -23,7 +35,8 @@
 param(
   [Parameter(Position = 0)]
   [string]$ProjectPath = ".",
-  [switch]$SkipExistingClaudeMd
+  [switch]$SkipExistingClaudeMd,
+  [switch]$Force
 )
 
 $ErrorActionPreference = "Stop"
@@ -54,25 +67,35 @@ Write-Host "  Template: $TemplateRoot"
 Write-Host "  Target:   $Target"
 Write-Host ""
 
-# Collect every file in the template except the scripts/ folder itself
-# (scripts are tooling, not project content). settings.json is never created.
+# Collect only the template files in the project-bootstrap allow-list. Everything else in
+# the template (README*, LICENSE, .gitignore, QUALITY.md, RELEASE.md, docs/, benchmarks/,
+# registry/, skills-library/, scripts/, .git/, .github/, .claude-plugin/, top-level hooks/,
+# .claude/settings.json) is the OS repo's own tooling/about-itself content and is never
+# copied into a target project - registry/skills-library are consumed via the global
+# registry install, not duplicated per project.
 $created = @()
 $updated = @()
 $skipped = @()
 
 $files = Get-ChildItem -LiteralPath $TemplateRoot -Recurse -File -Force | Where-Object {
   $rel = $_.FullName.Substring($TemplateRoot.Length).TrimStart('\','/')
-  # Skip repo/distribution tooling that is NOT per-project content: the scripts folder
-  # (installer tooling), the template's OWN git history (a real bug found while testing the
-  # Linux port - without this every new project silently received the template's .git blobs),
-  # the .github CI workflows, the .claude-plugin manifests and the plugin hooks/ wiring
-  # (those describe how to DISTRIBUTE the OS as a Claude Code plugin, not what a project needs),
-  # and any accidental settings.json.
-  ($rel -notlike "scripts\*") -and ($rel -notlike ".git\*") -and ($rel -notlike ".github\*") -and
-  ($rel -notlike ".claude-plugin\*") -and ($rel -notlike "hooks\*") -and ($rel -ne ".claude\settings.json")
+  ($rel -eq "CLAUDE.md") -or ($rel -eq "code_review.md") -or ($rel -eq "AGENTS.md") -or
+  ($rel -like ".claude\rules\*") -or ($rel -like ".claude\skills\*") -or
+  ($rel -like ".claude\commands\*") -or ($rel -like ".claude\hooks\*") -or
+  ($rel -eq ".claude\settings.example.json") -or ($rel -eq ".claude\settings.windows.example.json") -or
+  ($rel -like ".agent\*")
 }
 
 $preserved = @()
+$keptTracked = @()
+
+# Determine once whether the target is inside a git work tree, and if so, resolve `git`.
+$gitCmd = Get-Command git -ErrorAction SilentlyContinue
+$targetIsGitRepo = $false
+if ($gitCmd) {
+  & git -C $Target rev-parse --is-inside-work-tree *> $null
+  $targetIsGitRepo = ($LASTEXITCODE -eq 0)
+}
 
 foreach ($f in $files) {
   $rel = $f.FullName.Substring($TemplateRoot.Length).TrimStart('\','/')
@@ -93,7 +116,9 @@ foreach ($f in $files) {
   }
 
   if (Test-Path -LiteralPath $dest) {
-    # Compare content; if identical, skip. Otherwise back up then copy.
+    # Compare content; if identical, skip. Otherwise back up then copy (unless the file is
+    # already tracked in the target's own git history - then it is left untouched, matching
+    # the .sh port, unless -Force was passed).
     $same = $false
     try {
       $a = Get-FileHash -LiteralPath $dest -Algorithm SHA256
@@ -103,6 +128,17 @@ foreach ($f in $files) {
 
     if ($same) {
       $skipped += $rel
+      continue
+    }
+
+    $tracked = $false
+    if (-not $Force -and $targetIsGitRepo) {
+      & git -C $Target ls-files --error-unmatch -- $rel *> $null
+      $tracked = ($LASTEXITCODE -eq 0)
+    }
+
+    if ($tracked) {
+      $keptTracked += $rel
       continue
     }
 
@@ -129,6 +165,11 @@ Write-Host ""
 if ($preserved.Count -gt 0) {
   Write-Host "Preserved (kept project's own, untouched) ($($preserved.Count)):" -ForegroundColor Magenta
   $preserved | ForEach-Object { Write-Host "  ! $_" }
+  Write-Host ""
+}
+if ($keptTracked.Count -gt 0) {
+  Write-Host "Kept (tracked in your git history, differs from template - pass -Force to overwrite) ($($keptTracked.Count)):" -ForegroundColor Magenta
+  $keptTracked | ForEach-Object { Write-Host "  ! $_" }
   Write-Host ""
 }
 Write-Host "Done. Hooks are NOT active. To enable them:" -ForegroundColor Cyan

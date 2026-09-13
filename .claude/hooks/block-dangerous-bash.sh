@@ -35,7 +35,7 @@ fi
 #     the old '-rf'-only match.
 # (3) 'git push -f' bypassed the old '--force'-only match.
 danger_patterns=(
-  '(^|[[:space:]])rm[[:space:]]+(-rf|-fr|--recursive[[:space:]]+--force|--force[[:space:]]+--recursive)[[:space:]]+(/|~|\$HOME|\.)(\*|/\*)?([[:space:]]|$)'
+  '(^|[[:space:]])rm([[:space:]]+-[^[:space:]]+)*[[:space:]]+["'"'"']?(/|~|\$HOME|\$\{HOME\}|\.)["'"'"']?(\*|/\*)?["'"'"']?([[:space:]]|$)'
   '\bmkfs\b'
   '\bdd\b.*\bof=/dev/'
   ':\(\)\s*\{\s*:\|\:&\s*\};:'
@@ -46,7 +46,7 @@ danger_patterns=(
   '>\s*/dev/sd[a-z]'
 )
 for d in "${danger_patterns[@]}"; do
-  if printf '%s' "$cmd" | grep -Pq "$d" 2>/dev/null; then
+  if printf '%s' "$cmd" | srednoff_grep_pcre "$d"; then
     deny "Dangerous shell command blocked by SREDNOFF OS hook (pattern: $d)." "$d"
   fi
 done

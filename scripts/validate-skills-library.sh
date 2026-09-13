@@ -96,6 +96,37 @@ for skill_dir in "$skills_root"/*/; do
   done
 
   errors=""
+
+  # Broken-link check. A SKILL.md can cite a reference file that was never shipped and
+  # every check above still passes, because the frontmatter is perfectly valid - the
+  # skill just promises content that is not in the directory. So: extract markdown link
+  # targets and require each relative one to resolve inside the skill's own directory.
+  #
+  # Only targets carrying a file extension are checked. SKILL.md files legitimately
+  # contain markdown *syntax examples* in prose - telegram-bot-builder documents
+  # MarkdownV2 formatting as `[link](url)` - where "url" is a placeholder word, not a
+  # path, and flagging it would be a false failure. Requiring a "." in the target keeps
+  # those out. Checked against all 309 skills: with the rule, 3 findings and all 3 are
+  # genuine; without it, that same prose example is a fourth, bogus finding.
+  while IFS= read -r link_hit; do
+    [ -n "$link_hit" ] || continue
+    link_lineno="${link_hit%%:*}"
+    link_rest="${link_hit#*:}"
+    link_target="${link_rest#\]\(}"
+    link_target="${link_target%)}"
+    case "$link_target" in
+      *://*|mailto:*|tel:*|\#*) continue ;;
+    esac
+    link_path="${link_target%%#*}"   # drop a trailing #anchor
+    link_path="${link_path%% *}"     # drop a trailing "title"
+    [ -n "$link_path" ] || continue
+    case "$link_path" in
+      *.*) : ;;
+      *) continue ;;
+    esac
+    [ -e "$skill_dir/$link_path" ] || errors="${errors}broken link (line $link_lineno): $link_path; "
+  done < <(grep -noE '\]\([^)]+\)' "$skill_file")
+
   [ "$frontmatter_ok" -eq 1 ] || errors="${errors}missing frontmatter start; "
   lower_name="$(printf '%s' "$skill_name" | tr '[:upper:]' '[:lower:]')"
   [ "$skill_name" = "$lower_name" ] || errors="${errors}directory name must be lowercase; "

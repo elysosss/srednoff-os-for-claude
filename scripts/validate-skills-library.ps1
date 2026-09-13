@@ -66,6 +66,31 @@ foreach ($Skill in $SkillDirs) {
     if (-not $NameOk) { $Errors += "missing or invalid name (lowercase, alnum+hyphen, 2-63 chars)" }
     if (-not $DescriptionOk) { $Errors += "missing, too-short (<20 chars), or too-long (>1024 chars) description" }
 
+    # Broken-link check. A SKILL.md can cite a reference file that was never shipped and
+    # every check above still passes, because the frontmatter is perfectly valid - the
+    # skill just promises content that is not in the directory. So: extract markdown link
+    # targets and require each relative one to resolve inside the skill's own directory.
+    #
+    # Only targets carrying a file extension are checked. SKILL.md files legitimately
+    # contain markdown *syntax examples* in prose - telegram-bot-builder documents
+    # MarkdownV2 formatting as `[link](url)` - where "url" is a placeholder word, not a
+    # path, and flagging it would be a false failure. Requiring a "." in the target keeps
+    # those out. Checked against all 309 skills: with the rule, 3 findings and all 3 are
+    # genuine; without it, that same prose example is a fourth, bogus finding.
+    for ($i = 0; $i -lt $Lines.Count; $i++) {
+        foreach ($LinkMatch in [regex]::Matches($Lines[$i], '\]\(([^)]+)\)')) {
+            $Target = $LinkMatch.Groups[1].Value
+            if ($Target -match '://' -or $Target -match '^(mailto:|tel:|#)') { continue }
+            $LinkPath = ($Target -split '#')[0]
+            $LinkPath = ($LinkPath -split ' ')[0]
+            if ([string]::IsNullOrEmpty($LinkPath)) { continue }
+            if ($LinkPath -notmatch '\.') { continue }
+            if (-not (Test-Path -LiteralPath (Join-Path $Skill.FullName $LinkPath))) {
+                $Errors += "broken link (line $($i + 1)): $LinkPath"
+            }
+        }
+    }
+
     if ($Errors.Count -eq 0) {
         $Ok++
     } else {
