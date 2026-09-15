@@ -11,12 +11,96 @@ Claude Code (текст: `Codex`→`Claude Code`, пути `.codex/`→`.claude/
 `templates/claude-md-os/skills-library/<name>/SKILL.md` — НЕ грузятся автоматически. Уже
 **установлены**, но не **активированы**: `gen-profile-lock.ps1/.sh` при генерации PROFILE.lock
 копирует до 20 тег-совпадающих скиллов из `skills-library/` в `.claude/skills/` проекта (жёсткий
-кап — ~100 токенов на скилл на старте сессии Claude Code, 309 скиллов целиком = 30k+ токенов, что
+кап — ~100 токенов на скилл на старте сессии Claude Code, 326 скиллов целиком = 30k+ токенов, что
 неприемлемо). Полная библиотека: `skills-library/index.json`. 2 записи (`quality-cost-skill-kernel`,
 `source-ranking-roi-selector`) — донор-специфичные мета-концепции, description backfilled, но
 контент НЕ импортирован (см. `PLAN-V2-MERGE-FROM-CODEX.md`, "НЕ БРАТЬ"). 3 записи с совпадающим
 именем (`github-research`, `production-review`, `seo`) НЕ тронуты — у нас уже есть канонические
 версии этих скиллов.
+
+## no-ai-slop — адаптировано из MIT-источника, 13.09.2026
+
+[petergyang/no-ai-slop](https://github.com/petergyang/no-ai-slop) (MIT, 9035★, проверено через
+GitHub API 13.09.2026), файлы `skills/no-ai-slop/SKILL.md` + `eval.md`. **Адаптация, не копия:**
+переписаны структура и формулировки под наш формат, объём сжат с 97 строк до 45, чек-лист из
+их отдельного `eval.md` свёрнут в секцию внутри одной страницы, добавлены наши guardrails.
+Дословно переиспользованы только перечни слов-маркеров и названия паттернов — это фактические
+списки терминов, а не авторский текст. Их `agents/` и `scripts/` намеренно НЕ импортированы:
+они нужны плагин-упаковке автора, а не базовому режиму скилла.
+
+Анти-overlap (правило 70, п.3): существующая текстовая запись `unslop` остаётся в каталоге как
+алиас — канон на способность «убрать AI-slop из прозы» теперь один, это `no-ai-slop`.
+Скилл `anti-ai-slop-design-critic` не пересекается: он про UI, а не про текст.
+
+## Discovery-верификация ссылок, 13.09.2026 (9 записей каталога, контент НЕ импортирован)
+
+Проверка списка ссылок владельца. По каждому репозиторию лицензия, звёзды и `pushed_at` взяты
+через GitHub API, не по памяти. В `skills-library/` ничего из этих девяти не добавлено — только
+строки каталога discovery-уровня:
+
+`archify`, `headroom`, `strix`, `open-notebook`, `open-seo`, `claude-video`, `i-have-adhd`,
+`book-to-skill`.
+
+Причины, по которым это каталог, а не импорт, в каждом конкретном случае:
+
+- `archify` и `book-to-skill` — их `SKILL.md` неотделим от рантайма (Node-компилятор со
+  схемами; Python-пакет с `scripts/extract.py`). У `book-to-skill` файл 46 КБ и падает на
+  первом шаге без скрипта, так что копия одной страницы дала бы мёртвый скилл.
+- `headroom`, `open-notebook`, `open-seo`, `strix` — это приложения и сервисы, а не скиллы.
+- `claude-video` требует системных бинарников (`yt-dlp`, `ffmpeg`) и платного fallback.
+- `i-have-adhd` — предпочтение по стилю вывода, причём конфликтует с обязательным форматом
+  финального ответа из `CLAUDE.md`; включать осознанно и по сессиям.
+
+Отдельно про два: **`strix`** (Apache-2.0) — автономный pentest-агент, который сам правит код и
+запускает эксплуатацию, поэтому по правилу 70 и `50-security.md` ставится и запускается только
+с явным подтверждением владельца; для рутины остаётся канон `security-auditor`.
+**`rebelytics/one-skill-to-rule-them-all`** в каталог НЕ добавлен: лицензия **CC BY 4.0**
+(подтверждена через API) — это не лицензия на ПО, и её текст нельзя класть в MIT-дерево, а сама
+способность уже закрыта установленным `record-replay-skill-miner`.
+
+Отклонены без записи: `awesome-cloudflare` (`license: null` — копировать нечего и незачем,
+тема закрыта официальными скиллами Cloudflare), `MoneyPrinterTurbo` и `Agent-Reach` (не наша
+область), `claude-mem` (стал хостируемым сервисом с подпиской; тройное пересечение с
+`productivity:memory-management`, `context-manager` и записями VOLT).
+
+## Python / Infra / БД — написано нами, 13.09.2026 (source `SREDNOFF`, 16 записей)
+
+Не импорт: 16 скиллов написаны с нуля для этого репозитория, как ранее
+`telegram-ads-channel-placement`. Причина — замер по `skills-library/index.json`: при 22 скиллах
+с тегом `devops` и 21 с `test` по именам `pytest`, `docker`, `kubernetes`, `terraform`, `alembic`,
+`sqlalchemy`, `logging`, `profil*` в библиотеке было **ноль** совпадений. Тема была заявлена
+тегами, но конкретики под неё не существовало.
+
+- **Python (10):** `python-typing-and-mypy-strictness`, `python-async-await-patterns`,
+  `python-packaging-pyproject-poetry-uv`, `python-dataclasses-pydantic-validation`,
+  `pytest-fixtures-and-parametrization`, `python-profiling-cprofile-pyspy`,
+  `memory-leak-detection-python`, `legacy-python-codebase-modernization`,
+  `python-debugger-pdb-production-debugging`, `structured-logging-python`.
+- **Infra/БД (6):** `sqlalchemy-orm-patterns`, `alembic-migration-workflows`,
+  `dockerfile-best-practices-python`, `docker-compose-local-dev-environments`,
+  `kubernetes-deployment-manifests-basics`, `github-actions-python-ci-pipeline`.
+
+**Лицензионная чистота.** Текст наш. На уровне идей (какие темы вообще нужны разработчику)
+сверялись с MIT-репозиториями [wdm0006/python-skills](https://github.com/wdm0006/python-skills)
+(91★, MIT, пуш 06.09.2026), [Jeffallan/claude-skills](https://github.com/Jeffallan/claude-skills)
+(11399★, MIT, пуш 07.08.2026) и
+[anmolnagpal/devops-skills](https://github.com/anmolnagpal/devops-skills) (8★, MIT, пуш
+09.09.2026) — **ни строки текста оттуда не скопировано**. Лицензии проверены через GitHub API
+13.09.2026. Отклонены и НЕ использовались: `manikosto/claude-code-python-stack` (лучшее
+тематическое попадание из найденных, но **LICENSE отсутствует**),
+`ahmedasmar/devops-claude-skills`, `wimolivier/postgresql-best-practices` — тоже без лицензии.
+В `anthropics/skills` Python/DevOps-скиллов нет вообще (проверено), поэтому правило «официальное
+важнее community» здесь неприменимо — официального варианта не существует.
+
+**Анти-overlap.** Ни один из 16 не дублирует существующий канон; там, где тема соприкасается с
+уже имеющимся скиллом, во вводной строке нового скилла явно сказано, что остаётся за соседом:
+стратегия оптимизации — за `performance-optimization`, метод отладки — за
+`debugging-error-recovery` и `staff-debugger-agent`, слои тестирования — за
+`test-architect-agent`, рандомизированный ввод — за `property-based-testing`, картина телеметрии —
+за `observability-instrumentation`, CLI-обвязка пакета — за `python-cli-package-builder`, аудит
+безопасности миграций — за `database-schema-migration-auditor`, уровень SQL-планов — за
+`sql-query-plan-optimizer`. Инфраструктурные скиллы намеренно вендор-нейтральны (без привязки
+к AWS/EKS).
 
 ## Ads/Yandex/Telegram — добавлено по запросу Ивана 27.07.2026, все source-verified через `gh repo view`
 - **[Silverov/yandex-direct-skill](https://github.com/Silverov/yandex-direct-skill)** (MIT, 43★,

@@ -130,6 +130,12 @@
       "ai"
     ]
   },
+  "alembic-migration-workflows": {
+    "path": "skills-library/alembic-migration-workflows/SKILL.md",
+    "tags": [
+      "data"
+    ]
+  },
   "analytics-engineer-agent": {
     "path": "skills-library/analytics-engineer-agent/SKILL.md",
     "tags": [
@@ -626,6 +632,19 @@
       "devops"
     ]
   },
+  "docker-compose-local-dev-environments": {
+    "path": "skills-library/docker-compose-local-dev-environments/SKILL.md",
+    "tags": [
+      "infra"
+    ]
+  },
+  "dockerfile-best-practices-python": {
+    "path": "skills-library/dockerfile-best-practices-python/SKILL.md",
+    "tags": [
+      "infra",
+      "backend"
+    ]
+  },
   "docs-developer-portal-seo": {
     "path": "skills-library/docs-developer-portal-seo/SKILL.md",
     "tags": [
@@ -811,6 +830,13 @@
       "git"
     ]
   },
+  "github-actions-python-ci-pipeline": {
+    "path": "skills-library/github-actions-python-ci-pipeline/SKILL.md",
+    "tags": [
+      "devops",
+      "cicd"
+    ]
+  },
   "gltf-asset-pipeline": {
     "path": "skills-library/gltf-asset-pipeline/SKILL.md",
     "tags": [
@@ -970,6 +996,12 @@
       "general"
     ]
   },
+  "kubernetes-deployment-manifests-basics": {
+    "path": "skills-library/kubernetes-deployment-manifests-basics/SKILL.md",
+    "tags": [
+      "infra"
+    ]
+  },
   "landing-page-conversion-design": {
     "path": "skills-library/landing-page-conversion-design/SKILL.md",
     "tags": [
@@ -986,6 +1018,13 @@
     "path": "skills-library/language-specialist-agent/SKILL.md",
     "tags": [
       "general"
+    ]
+  },
+  "legacy-python-codebase-modernization": {
+    "path": "skills-library/legacy-python-codebase-modernization/SKILL.md",
+    "tags": [
+      "backend",
+      "quality"
     ]
   },
   "legal-risk-reviewer-agent": {
@@ -1035,6 +1074,13 @@
     "path": "skills-library/mcp-security-review/SKILL.md",
     "tags": [
       "security"
+    ]
+  },
+  "memory-leak-detection-python": {
+    "path": "skills-library/memory-leak-detection-python/SKILL.md",
+    "tags": [
+      "perf",
+      "backend"
     ]
   },
   "meta-ads-creative-testing": {
@@ -1195,6 +1241,13 @@
     "path": "skills-library/nextjs-production-app-architecture/SKILL.md",
     "tags": [
       "frontend"
+    ]
+  },
+  "no-ai-slop": {
+    "path": "skills-library/no-ai-slop/SKILL.md",
+    "tags": [
+      "docs",
+      "quality"
     ]
   },
   "no-code-low-code-agent": {
@@ -1407,10 +1460,56 @@
       "general"
     ]
   },
+  "pytest-fixtures-and-parametrization": {
+    "path": "skills-library/pytest-fixtures-and-parametrization/SKILL.md",
+    "tags": [
+      "test"
+    ]
+  },
+  "python-async-await-patterns": {
+    "path": "skills-library/python-async-await-patterns/SKILL.md",
+    "tags": [
+      "backend",
+      "perf"
+    ]
+  },
   "python-cli-package-builder": {
     "path": "skills-library/python-cli-package-builder/SKILL.md",
     "tags": [
       "shell"
+    ]
+  },
+  "python-dataclasses-pydantic-validation": {
+    "path": "skills-library/python-dataclasses-pydantic-validation/SKILL.md",
+    "tags": [
+      "backend",
+      "data"
+    ]
+  },
+  "python-debugger-pdb-production-debugging": {
+    "path": "skills-library/python-debugger-pdb-production-debugging/SKILL.md",
+    "tags": [
+      "backend",
+      "quality"
+    ]
+  },
+  "python-packaging-pyproject-poetry-uv": {
+    "path": "skills-library/python-packaging-pyproject-poetry-uv/SKILL.md",
+    "tags": [
+      "backend"
+    ]
+  },
+  "python-profiling-cprofile-pyspy": {
+    "path": "skills-library/python-profiling-cprofile-pyspy/SKILL.md",
+    "tags": [
+      "perf",
+      "backend"
+    ]
+  },
+  "python-typing-and-mypy-strictness": {
+    "path": "skills-library/python-typing-and-mypy-strictness/SKILL.md",
+    "tags": [
+      "backend"
     ]
   },
   "qa-automation-agent": {
@@ -1660,6 +1759,13 @@
       "data"
     ]
   },
+  "sqlalchemy-orm-patterns": {
+    "path": "skills-library/sqlalchemy-orm-patterns/SKILL.md",
+    "tags": [
+      "backend",
+      "data"
+    ]
+  },
   "sre-incident-commander-agent": {
     "path": "skills-library/sre-incident-commander-agent/SKILL.md",
     "tags": [
@@ -1682,6 +1788,13 @@
     "path": "skills-library/structured-data-schema-org/SKILL.md",
     "tags": [
       "seo"
+    ]
+  },
+  "structured-logging-python": {
+    "path": "skills-library/structured-logging-python/SKILL.md",
+    "tags": [
+      "backend",
+      "ops"
     ]
   },
   "supervisor-orchestrator-agent": {
