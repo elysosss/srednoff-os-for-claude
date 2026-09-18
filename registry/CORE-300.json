@@ -23336,7 +23336,306 @@
       "source_raw": "GH:Telegram-Mini-Apps/nextjs-template",
       "group": "G2",
       "description": "Official Telegram Mini Apps starter: Next.js + TypeScript + TON Connect + @telegram-apps/sdk (tma.js). Project-starter template, not an instructional skill (same pattern as vibe-template-web). Official Telegram-Mini-Apps org, 370★; no LICENSE file detected - verify terms before commercial use. Verified 27.07.2026."
+    },
+    {
+      "id": 2039,
+      "name": "python-typing-and-mypy-strictness",
+      "tags": [
+        "backend"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Python type hints, generics, Protocol, TypedDict, overloads, and strict mypy or pyright configuration, including gradual typing of untyped legacy modules. Trigger when the task involves programming work related to Python Typing And Mypy Strictness, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2040,
+      "name": "python-async-await-patterns",
+      "tags": [
+        "backend",
+        "perf"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for asyncio design and repair - TaskGroup, structured concurrency, cancellation and timeouts, blocking calls inside the event loop, and the deadlocks they cause. Trigger when the task involves programming work related to Python Async Await Patterns, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2041,
+      "name": "python-packaging-pyproject-poetry-uv",
+      "tags": [
+        "backend"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Python dependency management and release: pyproject.toml metadata, uv or Poetry workflows, lock files, reproducible environments, version constraints, and publishing to an index with trusted publishing. Trigger when the task involves programming work related to Python Packaging Pyproject Poetry Uv, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2042,
+      "name": "python-dataclasses-pydantic-validation",
+      "tags": [
+        "backend",
+        "data"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Python data modeling and input validation - Pydantic v2 models, validators and settings, dataclasses versus attrs, request and config schema design, serialization, and clear validation errors. Trigger when the task involves programming work related to Python Dataclasses Pydantic Validation, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2043,
+      "name": "pytest-fixtures-and-parametrization",
+      "tags": [
+        "test"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for pytest structure and mechanics - fixture scope and teardown, conftest layering, parametrize and ids, markers and selection, monkeypatch, and plugin choices for slow or flaky suites. Trigger when the task involves programming work related to Pytest Fixtures And Parametrization, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2044,
+      "name": "python-profiling-cprofile-pyspy",
+      "tags": [
+        "perf",
+        "backend"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill to profile Python CPU and wall-clock time with cProfile, py-spy, and flame graphs - choosing the right profiler, sampling a live production process, and reading the output before optimizing anything. Trigger when the task involves programming work related to Python Profiling Cprofile Pyspy, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2045,
+      "name": "memory-leak-detection-python",
+      "tags": [
+        "perf",
+        "backend"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill when a Python process grows in RSS without bound - tracemalloc snapshots, objgraph reference chains, gc diagnostics, reference cycles, caches that never evict, and native allocations that never return to the OS. Trigger when the task involves programming work related to Memory Leak Detection Python, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2046,
+      "name": "legacy-python-codebase-modernization",
+      "tags": [
+        "backend",
+        "quality"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill to modernize an aging Python codebase in stages - raising the minimum interpreter version, replacing abandoned dependencies, introducing typing and linting on a ratchet, and retiring dead code with evidence. Trigger when the task involves programming work related to Legacy Python Codebase Modernization, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2047,
+      "name": "python-debugger-pdb-production-debugging",
+      "tags": [
+        "backend",
+        "quality"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for hands-on Python debugging - pdb and ipdb sessions, breakpoint and post-mortem workflows, faulthandler and signal dumps, attaching to a stuck or remote process, and reconstructing a production incident from a traceback. Trigger when the task involves programming work related to Python Debugger Pdb Production Debugging, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2048,
+      "name": "structured-logging-python",
+      "tags": [
+        "backend",
+        "ops"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Python logging configuration and structured JSON output - stdlib logging versus structlog, contextvars for request correlation, log levels that mean something, exception logging, and rules for what must never be logged. Trigger when the task involves programming work related to Structured Logging Python, implementation, audits, debugging, strategy, or validation."
+    },
+    {
+      "id": 2049,
+      "name": "sqlalchemy-orm-patterns",
+      "tags": [
+        "backend",
+        "data"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for SQLAlchemy 2.0 ORM work: session lifecycle, unit of work boundaries, relationship loading strategies, and N+1 query elimination. Trigger when the task involves declarative models, repository or service layers, slow ORM-backed endpoints, detached instance errors, or a move from legacy Query API to 2.0 select() style."
+    },
+    {
+      "id": 2050,
+      "name": "alembic-migration-workflows",
+      "tags": [
+        "data"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Alembic migration workflows: autogenerate review, revision branching and merges, downgrade paths, data migrations, and zero-downtime rollout ordering. Trigger when a revision must be authored or reviewed, autogenerate produced a suspicious diff, heads have diverged after a merge, or a schema change must ship without taking the application offline."
+    },
+    {
+      "id": 2051,
+      "name": "dockerfile-best-practices-python",
+      "tags": [
+        "infra",
+        "backend"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for authoring and reviewing Python Dockerfiles: multi-stage builds, layer ordering and cache hits, non-root runtime users, image size reduction, and .dockerignore hygiene. Trigger when a Python service needs a container image, an existing image is oversized or rebuilds slowly, or a review flags a container running as root."
+    },
+    {
+      "id": 2052,
+      "name": "docker-compose-local-dev-environments",
+      "tags": [
+        "infra"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for Docker Compose local development environments: service healthchecks, dependency ordering, volumes for code and data, environment variables driven by a checked-in .env.example, and optional profiles. Trigger when a repository needs a one-command local stack, when services start before their dependencies are ready, or when onboarding a new developer breaks on missing configuration."
+    },
+    {
+      "id": 2053,
+      "name": "kubernetes-deployment-manifests-basics",
+      "tags": [
+        "infra"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for writing and reviewing core Kubernetes manifests: Deployment, Service, ConfigMap and Secret, readiness and liveness probes, resource requests and limits, and rollout plus rollback control. Trigger when a service needs its first manifests, when pods restart or never become ready, when a rollout stalls, or when a release must be rolled back."
+    },
+    {
+      "id": 2054,
+      "name": "github-actions-python-ci-pipeline",
+      "tags": [
+        "devops",
+        "cicd"
+      ],
+      "source": "SREDNOFF",
+      "source_raw": "SREDNOFF",
+      "group": "G2",
+      "description": "Use this skill for GitHub Actions CI on Python projects: a version matrix, dependency caching, lint, typecheck and test as separate steps, and artifact upload. Trigger when a Python repository needs a CI workflow, when the pipeline is slow because dependencies reinstall every run, when failures are hard to attribute to a stage, or when coverage and build artifacts must be published from CI."
+    },
+    {
+      "id": 2055,
+      "name": "archify",
+      "tags": [
+        "arch",
+        "docs",
+        "diagram"
+      ],
+      "source": "GH",
+      "source_raw": "GH:tt-a1i/archify",
+      "group": "G3",
+      "description": "Deterministic architecture-diagram compiler: the agent emits typed JSON IR, `archify` compiles it into a self-contained interactive HTML/SVG (architecture, workflow, sequence, dataflow, lifecycle) with a machine validation gate (`node bin/archify.mjs validate --quality showcase`), PNG/SVG/WebM export, Mermaid import, and Before/Delta/After snapshot diff. Discovery-tier (not imported to skills-library - SKILL.md is inseparable from its Node runtime, `schemas/` and `examples/`); install with `npx skills add tt-a1i/archify -g`, requires Node. MIT, 60408★, verified 13.09.2026."
+    },
+    {
+      "id": 2056,
+      "name": "headroom",
+      "tags": [
+        "infra",
+        "perf",
+        "mcp"
+      ],
+      "source": "GH",
+      "source_raw": "GH:headroomlabs-ai/headroom",
+      "group": "G3",
+      "description": "Local context-compression layer for LLM tool output (library + HTTP proxy + MCP server + `headroom wrap claude`): content-type routing to SmartCrusher (JSON), CodeCompressor (AST) and Kompress (prose), KV-cache alignment, and local originals re-fetchable via `headroom_retrieve`. External tool, not a skill; sits on the path of all LLM traffic, so pin a tag and review before use, and do not let `headroom learn` write to `CLAUDE.md` or `AGENTS.md` (restrict it to gitignored `CLAUDE.local.md`). Apache-2.0, 71843★, verified 13.09.2026."
+    },
+    {
+      "id": 2057,
+      "name": "strix",
+      "tags": [
+        "security",
+        "test"
+      ],
+      "source": "GH",
+      "source_raw": "GH:usestrix/strix",
+      "group": "G3",
+      "description": "Autonomous penetration-testing agent that runs sandboxed exploitation in containers plus 9 bundled security skills (OWASP Top 10, web app, API, CI scanning, find/fix vulnerabilities). Discovery-tier (not imported to skills-library) - autonomous framework that makes edits and runs exploitation, so per `70-skills-registry.md` (swarm/autonomous frameworks, 50-security.md) install and run ONLY with explicit confirmation from the owner; for routine work prefer the existing canon `security-auditor` or `penetration-tester`. Apache-2.0 (cannot be relicensed into this MIT tree), 62199★, verified 13.09.2026."
+    },
+    {
+      "id": 2058,
+      "name": "open-notebook",
+      "tags": [
+        "research",
+        "ai",
+        "data"
+      ],
+      "source": "GH",
+      "source_raw": "GH:lfnovo/open-notebook",
+      "group": "G3",
+      "description": "Self-hosted open-source NotebookLM alternative: private research workspace over your own sources with multi-model support, notes, search and podcast generation. Standalone application, no SKILL.md - discovery-tier; complements `PleasePrompto:notebooklm-skill`, which drives Google's hosted NotebookLM instead. MIT, 38691★, verified 13.09.2026."
+    },
+    {
+      "id": 2059,
+      "name": "open-seo",
+      "tags": [
+        "seo",
+        "mcp",
+        "data"
+      ],
+      "source": "GH",
+      "source_raw": "GH:every-app/open-seo",
+      "group": "G3",
+      "description": "Open-source Semrush/Ahrefs alternative with an MCP server over DataForSEO: keyword research, rank tracking, backlink and competitor data exposed to the agent as a live data source rather than as advice. Discovery-tier data source (not imported to skills-library - its bundled skills are wrappers over its own MCP and are useless without the deployed service); needs your own DataForSEO key. MIT, 18588★, verified 13.09.2026."
+    },
+    {
+      "id": 2060,
+      "name": "claude-video",
+      "tags": [
+        "ai",
+        "research"
+      ],
+      "source": "GH",
+      "source_raw": "GH:bradautomates/claude-video",
+      "group": "G3",
+      "description": "`/watch <url|path>` pipeline that lets the agent actually see a video: yt-dlp download, ffmpeg scene-aware frame extraction, native subtitles with a Whisper API fallback, then frames read as images alongside the transcript. Discovery-tier (not imported to skills-library - requires the yt-dlp and ffmpeg system binaries plus a paid transcription fallback); last push 01.07.2026. MIT, 17153★, verified 13.09.2026."
+    },
+    {
+      "id": 2061,
+      "name": "i-have-adhd",
+      "tags": [
+        "meta",
+        "docs"
+      ],
+      "source": "GH",
+      "source_raw": "GH:ayghri/i-have-adhd",
+      "group": "G3",
+      "description": "Explicitly invoked output-style skill (`/i-have-adhd`, `disable-model-invocation: true`): action first, numbered steps, restated state, trimmed tangents, concrete time estimates, visible progress. Discovery-tier, personal preference rather than a capability - it conflicts with the mandatory final-answer format in `CLAUDE.md` §6, so enable it deliberately and only per session. MIT, 43978★, verified 13.09.2026."
+    },
+    {
+      "id": 2062,
+      "name": "book-to-skill",
+      "tags": [
+        "meta",
+        "docs",
+        "research"
+      ],
+      "source": "GH",
+      "source_raw": "GH:virgiliojr94/book-to-skill",
+      "group": "G3",
+      "description": "Turns a technical book (PDF/EPUB) into a Claude Code skill: chunked extraction, structure detection, skill scaffolding. Discovery-tier, NOT imported to skills-library - its SKILL.md is 46 KB and hard-depends on `scripts/extract.py` plus a Python package, so a single-page copy would fail on its first step; install from the repo instead. Note upstream ships a SECURITY-NOTICE.md about a malicious re-upload under a similar name - pin this owner and a commit. MIT, 30400*, verified 13.09.2026."
+    },
+    {
+      "id": 2063,
+      "name": "no-ai-slop",
+      "tags": [
+        "docs",
+        "quality"
+      ],
+      "source": "GH",
+      "source_raw": "GH:petergyang/no-ai-slop",
+      "group": "G3",
+      "description": "Edit prose out of generic AI phrasing while keeping the author's voice, or audit a draft without rewriting it. Adapted into skills-library (MIT, attribution in INSTALL-SOURCES.md); supersedes the text-only `unslop` entry as the canon for prose de-slopping. MIT, 9035*, verified 13.09.2026."
     }
   ],
-  "count": 2037
+  "count": 2062
 }

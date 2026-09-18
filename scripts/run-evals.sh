@@ -24,6 +24,8 @@ secret_path_fixtures="$registry/evals/secret-path-fixtures.json"
 source_ranker_fixtures="$registry/evals/source-ranker-fixtures.json"
 source_ranker="$registry/source-ranker.sh"
 hook_lib="$HOME/.claude/templates/claude-md-os/.claude/hooks/hook-lib.sh"
+profile_tag_fixtures="$registry/evals/profile-tag-fixtures.json"
+gen_profile_lock="$HOME/.claude/templates/claude-md-os/scripts/gen-profile-lock.sh"
 
 if ! command -v jq >/dev/null 2>&1; then echo "jq not found - required for run-evals.sh" >&2; exit 1; fi
 
@@ -64,6 +66,32 @@ if [ -f "$secret_path_fixtures" ] && [ -f "$hook_lib" ]; then
     pass=0; [ "$got" -eq "$expect" ] && pass=1
     add_result "secret-path" "$id" "$pass" "deny=$expect" "deny=$got"
   done < <(jq -r '.[] | [.id, .path, (if .expectMatch then 1 else 0 end)] | @tsv' "$secret_path_fixtures" | strip_cr)
+fi
+
+# Project-classification regression. gen-profile-lock's heuristic decides which skills a
+# project gets, but its only observable output used to be the PROFILE.lock it writes, so
+# nothing tested it - a Python repo came out tagged `backend` and nothing else and no one
+# noticed. --print-tags exists to make it testable; each fixture builds a throwaway project
+# tree and asserts the exact tag set.
+if [ -f "$profile_tag_fixtures" ] && [ -f "$gen_profile_lock" ]; then
+  while IFS=$'\t' read -r id files_csv expected_csv; do
+    [ -z "$id" ] && continue
+    tmp_proj="$(mktemp -d 2>/dev/null || mktemp -d -t srednoff)"
+    IFS=',' read -ra _files <<< "$files_csv"
+    for f in ${_files[@]+"${_files[@]}"}; do
+      case "$f" in
+        */) mkdir -p "$tmp_proj/$f" ;;
+        *)  mkdir -p "$(dirname "$tmp_proj/$f")"; : > "$tmp_proj/$f" ;;
+      esac
+    done
+    got_csv="$(bash "$gen_profile_lock" --print-tags "$tmp_proj" 2>/dev/null)"
+    rm -rf "$tmp_proj"
+    # Order-insensitive exact set comparison.
+    got_sorted="$(printf '%s' "$got_csv" | tr ',' '\n' | sort | paste -sd',' -)"
+    exp_sorted="$(printf '%s' "$expected_csv" | tr ',' '\n' | sort | paste -sd',' -)"
+    pass=0; [ "$got_sorted" = "$exp_sorted" ] && pass=1
+    add_result "profile-tags" "$id" "$pass" "$exp_sorted" "$got_sorted"
+  done < <(jq -r '.[] | [.id, (.files | join(",")), (.expectedTags | join(","))] | @tsv' "$profile_tag_fixtures" | strip_cr)
 fi
 
 if [ -f "$mode_fixtures" ]; then

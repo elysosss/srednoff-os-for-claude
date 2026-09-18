@@ -10,12 +10,25 @@
 #   ./gen-profile-lock.sh /path/to/project
 set -uo pipefail
 
-target="${1:-.}"
+# --print-tags classifies the project and prints the dominant tags, then exits without
+# writing anything and without needing the registry. It exists so the classifier can be
+# regression-tested (evals/profile-tag-fixtures.json) instead of only being observable
+# through the PROFILE.lock it produces.
+print_tags=0
+args=()
+for a in "$@"; do
+  case "$a" in
+    --print-tags) print_tags=1 ;;
+    *) args+=("$a") ;;
+  esac
+done
+target="."
+[ "${#args[@]}" -gt 0 ] && target="${args[0]}"
 target="$(cd "$target" && pwd)"
 name="$(basename "$target")"
 core="$HOME/.claude/registry/CORE-300.md"
-if [ ! -f "$core" ]; then echo "CORE-300.md not found: $core" >&2; exit 1; fi
-total="$(grep -Ec '^[[:space:]]*[0-9]+\.' "$core" || true)"
+if [ "$print_tags" -eq 0 ] && [ ! -f "$core" ]; then echo "CORE-300.md not found: $core" >&2; exit 1; fi
+total="$(grep -Ec '^[[:space:]]*[0-9]+\.' "$core" 2>/dev/null || true)"
 
 # Stamp the OS version this project was last synced against, so doctor can detect
 # template drift without needing a separate marker file.
@@ -52,8 +65,34 @@ if [ -f "$target/requirements.txt" ] || [ -f "$target/pyproject.toml" ]; then
   printf '%s' "$py" | grep -Eq 'python-telegram-bot|aiogram|pyTelegramBotAPI' && add_tag "telegram"
 fi
 find "$target" -maxdepth 1 -name "*.ps1" -print -quit 2>/dev/null | grep -q . && add_tag "windows"
-if [ -f "$target/Dockerfile" ] || find "$target" -name "*.tf" -print -quit 2>/dev/null | grep -q .; then
+
+# Python toolchain signals the manifest alone does not carry. A Python repo used to come
+# out tagged `backend` and nothing else, so a project full of pytest suites and Alembic
+# migrations never matched a single [test] or [data] skill.
+if [ -f "$target/pytest.ini" ] || [ -f "$target/tox.ini" ] || [ -f "$target/conftest.py" ] \
+   || [ -d "$target/tests" ] || [ -d "$target/test" ]; then
+  add_tag "test"
+fi
+if [ -f "$target/alembic.ini" ] || [ -d "$target/alembic" ] || [ -d "$target/migrations" ] \
+   || [ -f "$target/prisma/schema.prisma" ] \
+   || find "$target" -maxdepth 2 -name "*.sql" -print -quit 2>/dev/null | grep -q .; then
+  add_tag "data"
+fi
+# Django puts its entrypoint here and nowhere else.
+if [ -f "$target/manage.py" ]; then add_tag "backend"; add_tag "web"; fi
+
+# Infra was detected only by a root Dockerfile or any *.tf, which misses most real
+# deployments: compose-only local stacks, k8s manifests, Helm charts.
+if [ -f "$target/Dockerfile" ] || [ -f "$target/docker-compose.yml" ] || [ -f "$target/docker-compose.yaml" ] \
+   || [ -f "$target/compose.yml" ] || [ -f "$target/compose.yaml" ] \
+   || [ -d "$target/k8s" ] || [ -d "$target/kubernetes" ] || [ -d "$target/helm" ] || [ -d "$target/charts" ] \
+   || find "$target" -name "*.tf" -print -quit 2>/dev/null | grep -q .; then
   add_tag "infra"; add_tag "devops"
+fi
+# A pipeline definition is a devops signal on its own, whatever the stack is.
+if [ -d "$target/.github/workflows" ] || [ -f "$target/.gitlab-ci.yml" ] \
+   || [ -f "$target/Jenkinsfile" ] || [ -f "$target/.circleci/config.yml" ]; then
+  add_tag "devops"; add_tag "cicd"
 fi
 echo "$name" | grep -Eqi 'amazon|fba' && { add_tag "amazon"; add_tag "business"; add_tag "marketing"; }
 echo "$name" | grep -Eqi 'seo' && add_tag "seo"
@@ -62,6 +101,11 @@ echo "$name" | grep -Eqi 'design' && add_tag "design"
 echo "$name" | grep -Eqi 'telegram|tg-bot|tgbot|miniapp|mini-app' && add_tag "telegram"
 echo "$name" | grep -Eqi 'yandex-direct|direct-ads|ppc|adwords|google-ads|meta-ads|paid-ads' && { add_tag "ppc"; add_tag "marketing"; }
 [ "${#tags[@]}" -eq 0 ] && add_tag "web"
+
+if [ "$print_tags" -eq 1 ]; then
+  printf '%s\n' "$(IFS=,; echo "${tags[*]}")"
+  exit 0
+fi
 
 # --- pull candidates from CORE-300 by tags (dedupe by skill name so G2/G3 variants of the
 # same capability collapse) ---

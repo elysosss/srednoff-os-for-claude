@@ -1,0 +1,84 @@
+[
+  {
+    "id": "python_manifest_only",
+    "note": "A bare Python manifest carries no test/data signal - backend alone is correct here",
+    "files": ["requirements.txt"],
+    "expectedTags": ["backend"]
+  },
+  {
+    "id": "python_with_pytest",
+    "note": "A tests/ tree is the signal a Python manifest cannot carry; without it no [test] skill was ever matched",
+    "files": ["requirements.txt", "tests/"],
+    "expectedTags": ["backend", "test"]
+  },
+  {
+    "id": "python_with_tox",
+    "files": ["pyproject.toml", "tox.ini"],
+    "expectedTags": ["backend", "test"]
+  },
+  {
+    "id": "python_with_alembic",
+    "files": ["requirements.txt", "alembic.ini"],
+    "expectedTags": ["backend", "data"]
+  },
+  {
+    "id": "python_service_full",
+    "note": "The shape this change exists for: FastAPI service with tests, migrations and a container",
+    "files": ["pyproject.toml", "tests/", "alembic.ini", "Dockerfile"],
+    "expectedTags": ["backend", "test", "data", "infra", "devops"]
+  },
+  {
+    "id": "django_project",
+    "files": ["manage.py"],
+    "expectedTags": ["backend", "web"]
+  },
+  {
+    "id": "compose_only_no_dockerfile",
+    "note": "A local dev stack defined purely in compose was invisible before - infra needed a root Dockerfile or a *.tf",
+    "files": ["docker-compose.yml"],
+    "expectedTags": ["infra", "devops"]
+  },
+  {
+    "id": "kubernetes_manifests",
+    "files": ["k8s/"],
+    "expectedTags": ["infra", "devops"]
+  },
+  {
+    "id": "helm_charts",
+    "files": ["charts/"],
+    "expectedTags": ["infra", "devops"]
+  },
+  {
+    "id": "terraform",
+    "note": "Already detected before this change - pinned so the rewrite cannot lose it",
+    "files": ["main.tf"],
+    "expectedTags": ["infra", "devops"]
+  },
+  {
+    "id": "github_actions",
+    "files": [".github/workflows/"],
+    "expectedTags": ["devops", "cicd"]
+  },
+  {
+    "id": "gitlab_ci",
+    "files": [".gitlab-ci.yml"],
+    "expectedTags": ["devops", "cicd"]
+  },
+  {
+    "id": "sql_schema",
+    "files": ["schema.sql"],
+    "expectedTags": ["data"]
+  },
+  {
+    "id": "node_web_app",
+    "note": "Pre-existing behaviour, pinned against regression",
+    "files": ["package.json"],
+    "expectedTags": ["web", "frontend"]
+  },
+  {
+    "id": "empty_project_falls_back_to_web",
+    "note": "The documented fallback when nothing matches",
+    "files": ["README.md"],
+    "expectedTags": ["web"]
+  }
+]
