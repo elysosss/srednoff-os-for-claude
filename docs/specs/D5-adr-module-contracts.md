@@ -115,7 +115,7 @@ Scenario: S5 accepted ADRs are immutable
 `off` — команды ничего не делают, `adr-gate` возвращает 2 (D2 и D8 трактуют как «гейт выключен» и пишут это в отчёт, а не молча пропускают). `uninstall` удаляет модуль; ADR и CONTRACT.md остаются данными проекта.
 
 ## Estimate (оценка объёма)
-Шаблоны ADR/CONTRACT + `adr new/lint` — 0.5–1 сессия; `contract lint` — 0.5; `adr-gate` + `task block/unblock` — 1; behave S1–S5 на двух ОС — 0.5. Итого 2.5–3 сессии. Взорвать может: A4 на squash-мержах и шум гейта на манифестах в монорепо.
+Шаблоны ADR/CONTRACT + `adr new/lint` — 0.5–1 сессия; `contract lint` — 0.5; `adr-gate` + `task block/unblock` — 1; сценарии S1 (run-evals)–S5 на двух ОС — 0.5. Итого 2.5–3 сессии. Взорвать может: A4 на squash-мержах и шум гейта на манифестах в монорепо.
 
 ## План работ
 Заполняется после аппрува.

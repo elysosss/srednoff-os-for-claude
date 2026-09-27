@@ -60,7 +60,7 @@
 Коды выхода: 0 — есть решение, 2 — модуль выключен (печатает `{"decision":"self","blockers":["classifier-disabled"]}`), 1 — ошибка разбора (тоже трактуется как `self`, fail-safe в сторону «не делегировать»). Конфиг `config/default.json`: `enabled`, `signals` (путь), `classRoutes`, `denyPaths[]`, `askFileThreshold`.
 
 ## Data model / migrations
-Состояния нет. Конфиг и словари версионируются `schemaVersion`. Фикстуры — `tests/fixtures/task-class-fixtures.json` в формате `registry/evals` (`{id, brief, paths, expectedDecision, expectedRoute}`), прогоняются и `run-evals`, и behave.
+Состояния нет. Конфиг и словари версионируются `schemaVersion`. Фикстуры — `tests/fixtures/task-class-fixtures.json` в формате `registry/evals` (`{id, brief, paths, expectedDecision, expectedRoute}`), прогоняются в `run-evals`.
 
 ## Security model
 Защищаем: от случайной отправки наружу задач с секретами, auth/payments/миграциями и задач про саму OS. Любая ошибка классификатора даёт `self`, то есть сбой закрыт в безопасную сторону.
@@ -103,7 +103,7 @@ Scenario: S4 bulk mechanical edit is delegated to the mapped route
 
 ## Estimate (оценка объёма)
 - Вендоринг `routing-lib` + сверка хэша + скелет `task-classify` — 0.5 сессии.
-- Словари RU/EN, запреты, фикстуры и behave S1–S4 — 1–1.5 сессии.
+- Словари RU/EN, запреты, фикстуры и сценарии S1 (run-evals)–S4 — 1–1.5 сессии.
 Итого ~2 сессии. Взорвать может: E1 без механизма вендоринга (тогда дублирование с отдельными фикстурами, +0.5 сессии).
 
 ## План работ
@@ -111,7 +111,7 @@ Scenario: S4 bulk mechanical edit is delegated to the mapped route
 
 ## Definition of done
 - [ ] Фикстуры: 0 ложных `delegate` на «ловушках», паритет PS/bash 100 %
-- [ ] behave S1–S4 зелёные на Windows и Linux
+- [ ] сценарии S1 (run-evals)–S4 зелёные на Windows и Linux
 - [ ] Навык `delegate` вызывает классификатор и уважает `self`
 
 ## Progress log

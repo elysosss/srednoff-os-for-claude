@@ -110,7 +110,7 @@ Scenario: S4 metered executor needs route approval
 Режим `off` (E1) — X1 работает по `--executor` как раньше. Удаление модуля удаляет `state/` со счётчиками; X1 от него не зависит.
 
 ## Estimate (оценка объёма)
-- `route-pick`, `route-record`, конфиг и behave S1–S4 — 1.5 сессии.
+- `route-pick`, `route-record`, конфиг и сценарии S1 (run-evals)–S4 — 1.5 сессии.
 - Сбор реальных сигнатур ошибок `codex`/`dsh` и фикстуры — 0.5–1 сессия.
 Итого 2–3 сессии. Взорвать может: отсутствие стабильных сигнатур квоты у CLI (тогда только локальные счётчики).
 
@@ -118,7 +118,7 @@ Scenario: S4 metered executor needs route approval
 Заполняется после аппрува.
 
 ## Definition of done
-- [ ] behave S1–S4 зелёные на Windows и Linux, паритет пар скриптов
+- [ ] сценарии S1 (run-evals)–S4 зелёные на Windows и Linux, паритет пар скриптов
 - [ ] Фикстуры сигнатур для `codex` и `dsh` собраны с реальных ответов
 - [ ] `doctor` проверяет, что каждое звено маршрута — существующий исполнитель X1
 

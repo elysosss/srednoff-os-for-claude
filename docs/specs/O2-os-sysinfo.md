@@ -36,7 +36,7 @@ PF-01 (версия как первый факт отчёта), PF-15 (каки�
 
 ## Architecture (дизайн)
 **Принцип — allow-list, а не вычистка.** Скрипт собирает только перечисленные поля; всё, чего нет в списке, не попадает в файл вообще.
-1. **Секции**: `platform` (ОС, билд, архитектура, локаль, кодовая страница консоли), `shells` (PowerShell `$PSVersionTable`, bash, Git for Windows), `claude` (версия, `authMethod`, `apiProvider`, `subscriptionType` — без email/org), `tools` (git, gh, jq, grep + `grep -P` работоспособность и выбранная локаль из `srednoff_pcre_locale`, python, node, docker, behave в venv модулей), `docker` (клиент/сервер версии, демон доступен да/нет, имя текущего контекста без endpoint), `os` (версия OS, `osRoot` обезличен, модули `{id, version, enabled}`, какие события хуков подключены — имена скриптов без аргументов), `env-presence` (для фиксированного списка имён: `ANTHROPIC_*`, `CLAUDE_*`, `HTTPS_PROXY`… — **только** `set/unset/empty`), `doctor` (вердикты O1 без `detail`).
+1. **Секции**: `platform` (ОС, билд, архитектура, локаль, кодовая страница консоли), `shells` (PowerShell `$PSVersionTable`, bash, Git for Windows), `claude` (версия, `authMethod`, `apiProvider`, `subscriptionType` — без email/org), `tools` (git, gh, jq, grep + `grep -P` работоспособность и выбранная локаль из `srednoff_pcre_locale`, python, node, docker), `docker` (клиент/сервер версии, демон доступен да/нет, имя текущего контекста без endpoint), `os` (версия OS, `osRoot` обезличен, модули `{id, version, enabled}`, какие события хуков подключены — имена скриптов без аргументов), `env-presence` (для фиксированного списка имён: `ANTHROPIC_*`, `CLAUDE_*`, `HTTPS_PROXY`… — **только** `set/unset/empty`), `doctor` (вердикты O1 без `detail`).
 2. **Обезличивание**: домашний каталог → `~`, имя пользователя → `<user>`, имя хоста → `<host>`, e-mail и IP (кроме 127.0.0.1) → `<redacted>`. PATH не выводится целиком — только какие из нужных бинарей в нём найдены.
 3. **Последняя линия — fail-closed**: готовый текст прогоняется через секрет-скан `hook-lib` (13 правил). Любое совпадение → файл **не пишется**, печатается правило и секция; маскировать и «всё равно сохранить» нельзя.
 4. **Куда**: `<project>/.claude/os-modules/.state/sysinfo/sysinfo-<UTC>.md` + `.json`. Перед записью `git check-ignore` на путь; если каталог не игнорируется — отказ с подсказкой добавить `.state/` в `.gitignore` или указать `-Out`. `-Out` внутри `~/.claude` отвергается (HANDOFF §2).
@@ -85,7 +85,7 @@ Scenario: S3 каталог не в gitignore
 Скрипт и команда удаляются; снимки лежат в одном каталоге `.state/sysinfo/`, удаляются целиком. Поведение остальной OS не меняется.
 
 ## Estimate (оценка объёма)
-Сбор и allow-list: 1. Обезличивание + fail-closed скан + gitignore: 0.5. Паритет и behave: 1. Итого ≈ 2.5 сессии. Взорвать может: разнообразие установок Docker Desktop/WSL.
+Сбор и allow-list: 1. Обезличивание + fail-closed скан + gitignore: 0.5. Паритет и сценарии run-evals: 1. Итого ≈ 2.5 сессии. Взорвать может: разнообразие установок Docker Desktop/WSL.
 
 ## План работ
 Заполняется после аппрува.
