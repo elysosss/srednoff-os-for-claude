@@ -9,11 +9,21 @@ This file exists because a fork that silently diverges becomes unmaintainable. E
 we change on purpose is listed here, so the next sync can tell a deliberate divergence
 from drift.
 
-## Current divergence: none
+## Current divergence: `docs/specs/` (planning only)
 
-As of 2026-09-13 this fork is **byte-identical to upstream** apart from this file.
+Apart from this file, the fork differs from upstream by one directory: `docs/specs/`, the
+specs for the OS extensions (module format, secrets filter, doctor, probes, executors, ...),
+added 2026-09-27. They are design documents, not code, and they live here because each one
+is tracked by an issue in this fork. Implementation goes upstream as ordinary PRs, one spec
+at a time; a PR links its spec rather than carrying it. When upstream wants the specs
+themselves, they move over and this divergence is retired. Nothing under `docs/specs/` is
+loaded into a Claude Code session or read by any script.
 
-That is a change from how the fork started. It used to repoint the
+The old divergence, retired on 2026-09-13, is recorded below.
+
+### Retired: the marketplace repoint
+
+The fork started out repointing the
 `/plugin marketplace add` command in both READMEs at this fork, on the stated grounds that
 "it carries fixes that upstream has not taken yet, so installing from upstream is a
 downgrade". **That reason has lapsed**: upstream merged all seven of our fixes on
@@ -33,7 +43,9 @@ Working branches live in this fork and are opened as PRs against upstream. Merge
 `fix/bash-hooks-pcre-fail-open`, `fix/routing-pcre-locale-degradation`,
 `fix/protect-secrets-multiedit-coverage`, `fix/hook-path-false-positives`,
 `fix/dangerous-bash-coverage`, `fix/catalog-json-check-crlf`,
-`docs/skill-count-and-release-drift`.
+`docs/skill-count-and-release-drift` (2026-09-13); `feat/detect-python-devops-projects`,
+`feat/python-devops-skills`, `feat/discovery-catalog-and-no-ai-slop`,
+`feat/observation-log`, `feat/delegation-reminder-hook` (2026-09-15).
 
 ## Things not to "tidy"
 
