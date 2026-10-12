@@ -39,7 +39,7 @@
 | Шаг | Что | Задача | Метка | Объём |
 |---|---|---|---|---|
 | 0 | Перевести задачи и спеки на модель форка — **сделано 12.10** (этот коммит); осталось решить судьбу старых заметок `PR-BODIES.md`, `tmp.md` (не в git) и удалить влитые локальные ветки | — | — | — |
-| 1 | **Перезатирание CLAUDE.md и файлов проекта** (create-only, см. ниже) | [#34](https://github.com/elysosss/srednoff-os-for-claude/issues/34) | upstream-candidate | 1–1.5 сессии |
+| 1 | **Перезатирание CLAUDE.md и файлов проекта** (create-only) — **сделано 12.10**: фикс влит в `main` форка, PR в апстрим [#21](https://github.com/srednoff888-art/srednoff-os-for-claude/pull/21) ждёт мержа | [#34](https://github.com/elysosss/srednoff-os-for-claude/issues/34) | upstream-candidate | — |
 | 2 | PowerShell-инструмент обходит все хуки OS (PF-28) | [#6](https://github.com/elysosss/srednoff-os-for-claude/issues/6) | upstream-candidate | 1 |
 | 3 | Спайк F1: go/no-go по A-02 (оригинал секрета в транскрипте и при `--resume`) и A-09 (что модель видит после Edit) | [#8](https://github.com/elysosss/srednoff-os-for-claude/issues/8) | fork-only | 1 |
 | 4 | E1 — формат модулей; на нём стоит всё остальное | [#7](https://github.com/elysosss/srednoff-os-for-claude/issues/7) | fork-only | 2.5–3.5 |
@@ -47,10 +47,10 @@
 
 Порядок внутри спек и зависимости — [docs/specs/README.md](../specs/README.md).
 
-### Шаг 1 подробно: что ещё перезатирается
+### Шаг 1 подробно: что перезатиралось (исправлено 12.10)
 
 Фикс от 11.08 (апстрим PR #4) остановил порчу README/LICENSE/.gitignore и защитил файлы,
-**закоммиченные** в git проекта. По коду на 12.10 остались:
+**закоммиченные** в git проекта. По коду на 12.10 оставались (закрыты PR #21):
 
 | # | Как | Где |
 |---|---|---|
@@ -62,7 +62,7 @@
 Решение (DECISIONS 12.10, п. 4): **create-only** по умолчанию — существующие файлы не
 меняются, отличия печатаются; замена — только явным флагом и руками; CLAUDE.md проекта без
 флага не трогается никогда. Фикстуры на V1–V3 в `registry/evals`, до/после числами в PR.
-Делать до C1 (#16), который тоже меняет `gen-profile-lock`.
+Сделано: 11 фикстур `create-only`, bash 99/105 → 105/105, PowerShell 105/105. Последствие: `apply-os-all --sync` и `doctor --fix-safe` больше не обновляют разошедшиеся файлы, только добавляют новые и показывают отличия. C1 (#16) теперь можно начинать.
 
 ---
 
@@ -102,7 +102,7 @@ PowerShell: `$env:USERPROFILE = "<тот же путь>"; powershell -File .\scr
 & "<чекаут форка>\scripts\init-claude-project.ps1" "<путь к проекту>" -SkipExistingClaudeMd
 ```
 
-`-SkipExistingClaudeMd` обязателен, пока не сделан шаг 1.
+`-SkipExistingClaudeMd` после шага 1 не обязателен (create-only), но безвреден.
 
 ---
 
