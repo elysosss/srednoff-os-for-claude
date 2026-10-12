@@ -32,6 +32,7 @@
   апстрим нет; все прошлые (#4–#20) влиты.
 - Реализации расширений ещё нет — есть 28 спек (`docs/specs/`) и задачи #6–#33 по ним, плюс
   #4 (битые ссылки в скиллах) и #5 (разбор mattpocock/skills).
+- Сделано после 12.10: #34 (create-only, PR [#21](https://github.com/srednoff888-art/srednoff-os-for-claude/pull/21)), #6 (хуки и PowerShell, PR [#22](https://github.com/srednoff888-art/srednoff-os-for-claude/pull/22)), #4 (битые ссылки в скиллах, влито в форк, PR в апстрим не открыт), #5 (разбор mattpocock/skills: взяты `handoff`, `diagnosing-bugs`, `writing-for-agents`; указатели `to-tickets`, `code-review`; отвергнуты `resolving-merge-conflicts`, `research`). Спайк F1 (#8) пропущен, E1 (#7) ждёт живых проб A-13/A-14.
 - Тест-контур OS: `run-evals` 94/94 на bash и PowerShell; CI апстрима 7/7.
 
 ## План
