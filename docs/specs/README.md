@@ -2,7 +2,10 @@
 
 > Fork-local. Спеки — **не реализация**: каждая реализуется только после аппрува владельца.
 > Входные брифы — «OS Extensions — бриф на спецификации» и «Agent Dev Playbook» (оба 2026-09-27).
-> Каждой спеке соответствует задача в [issues форка](https://github.com/elysosss/srednoff-os-for-claude/issues); реализация — ветками от `upstream/main` и PR в апстрим.
+> Каждой спеке соответствует задача в [issues форка](https://github.com/elysosss/srednoff-os-for-claude/issues).
+> С 2026-10-12 форк — своя сборка «OS для программиста»: спеки с меткой `fork-only` делаются ветками от `main`
+> форка и PR в форк; `upstream-candidate` — ветками от `upstream/main` и PR в апстрим. Модель — [FORK.md](../../FORK.md),
+> план и состояние — [docs/fork/README.md](../fork/README.md), решения — [docs/fork/DECISIONS.md](../fork/DECISIONS.md).
 
 ## Как устроено
 
@@ -36,7 +39,7 @@
 | Свои правила F1 | Firebird — только пароли; Bybit — HMAC и RSA; значения — вне репозитория |
 | Хуки модулей (E1) | `settings.local.json` |
 | Установка как плагин (E1) | нет, только папка проекта |
-| Что уходит в апстрим | всё, кроме личных значений |
+| Что уходит в апстрим | ~~всё, кроме личных значений~~ — **отменено 2026-10-12**: в апстрим только общее (баги OS), модули — в форке ([DECISIONS](../fork/DECISIONS.md)) |
 | Тесты | **без behave**: Gherkin — формат описания, исполнение — фикстуры `run-evals`, парно `.ps1`/`.sh` |
 | Язык анализаторов D6/D7/D10 | парные `.ps1`/`.sh` (оценки пересчитаны) |
 | Формат карточек (D2) | строгое подмножество YAML |
@@ -49,7 +52,7 @@
 
 ## Реестр
 
-Баг существующей OS, найденный по ходу: инструмент PowerShell обходит все хуки — [#6](https://github.com/elysosss/srednoff-os-for-claude/issues/6).
+Баги существующей OS (кандидаты в апстрим): инструмент PowerShell обходит все хуки — [#6](https://github.com/elysosss/srednoff-os-for-claude/issues/6); CLAUDE.md и файлы проекта всё ещё перезатираются — [#34](https://github.com/elysosss/srednoff-os-for-claude/issues/34).
 
 | ID | Спека | Задача | Тип | Статус | Одна строка |
 |---|---|---|---|---|---|
