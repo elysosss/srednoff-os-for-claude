@@ -26,6 +26,8 @@ $SourceRanker = Join-Path $Registry "source-ranker.ps1"
 $HookLib = Join-Path $env:USERPROFILE ".claude\templates\claude-md-os\.claude\hooks\hook-lib.ps1"
 $ProfileTagFixtures = Join-Path $Registry "evals\profile-tag-fixtures.json"
 $BlockBashHook = Join-Path $env:USERPROFILE ".claude\templates\claude-md-os\.claude\hooks\block-dangerous-bash.ps1"
+$OsModule = Join-Path $env:USERPROFILE ".claude\templates\claude-md-os\scripts\os-module.ps1"
+$ModuleTemplate = Join-Path $env:USERPROFILE ".claude\templates\claude-md-os\modules\_template"
 $DangerousFixtures = Join-Path $Registry "evals\dangerous-command-fixtures.json"
 $GenProfileLock = Join-Path $env:USERPROFILE ".claude\templates\claude-md-os\scripts\gen-profile-lock.ps1"
 $InitProject = Join-Path $env:USERPROFILE ".claude\templates\claude-md-os\scripts\init-claude-project.ps1"
@@ -186,6 +188,128 @@ if ((Test-Path -LiteralPath $DangerousFixtures) -and (Test-Path -LiteralPath $Bl
     $pass = ($got -eq [bool]$f.expectDeny)
     $results.Add([pscustomobject]@{ suite = "dangerous-command"; id = $f.id; pass = $pass; expected = "deny=$($f.expectDeny)"; got = "deny=$got" }) | Out-Null
   }
+}
+
+# OS module format (E1). The installer is exercised end to end on throwaway projects against a
+# throwaway modules directory (SREDNOFF_OS_MODULES_DIR), so nothing under the OS checkout changes.
+# T1 manifest validity, T2 "off changes nothing", T3 rewrites conflict, T4 uninstall restores
+# settings byte for byte, T5 refusal to use the profile directory, plus an unparsable settings
+# file (exit 3).
+if ((Test-Path -LiteralPath $OsModule) -and (Test-Path -LiteralPath $ModuleTemplate)) {
+  $omTmp = Join-Path ([System.IO.Path]::GetTempPath()) ("srednoff-evalmod-" + [guid]::NewGuid().ToString("N"))
+  $omMods = Join-Path $omTmp "modules"
+  New-Item -ItemType Directory -Force -Path $omMods | Out-Null
+  Copy-Item -LiteralPath $ModuleTemplate -Destination (Join-Path $omMods "_template") -Recurse
+  $env:SREDNOFF_OS_MODULES_DIR = $omMods
+  $omEnc = New-Object System.Text.UTF8Encoding($false)
+  $prevEapOm = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+  function Omx { & powershell -NoProfile -ExecutionPolicy Bypass -File $OsModule @args *> $null; return $LASTEXITCODE }
+  function OmProj([string]$Name) { $p = Join-Path $omTmp $Name; New-Item -ItemType Directory -Force -Path $p | Out-Null; return $p }
+  function OmBytes([string]$Path) { return [System.Convert]::ToBase64String([System.IO.File]::ReadAllBytes($Path)) }
+  function OmFiles([string[]]$Dirs) { $n = 0; foreach ($d in $Dirs) { if (Test-Path -LiteralPath $d) { $n += @(Get-ChildItem -LiteralPath $d -Recurse -File -Force).Count } }; return $n }
+  function OmAdd([string]$Id, [bool]$Pass, [string]$Exp, [string]$Got) {
+    $results.Add([pscustomobject]@{ suite = "os-module"; id = $Id; pass = $Pass; expected = $Exp; got = $Got }) | Out-Null
+  }
+  $userSettings = "{`n  `"hooks`": {`n    `"PreToolUse`": [`n      { `"matcher`": `"Bash`", `"hooks`": [ { `"type`": `"command`", `"command`": `"user-hook`" } ] }`n    ]`n  },`n  `"env`": { `"A`": `"1`" }`n}`n"
+
+  # T1
+  $rcNew = Omx new demo
+  $rcVal = Omx validate demo
+  $planPath = Join-Path $omMods "demo\.claude-plugin\plugin.json"
+  $good = [System.IO.File]::ReadAllText($planPath)
+  $j = $good | ConvertFrom-Json
+  $j.metadata.srednoffOs.modes = @("on")
+  [System.IO.File]::WriteAllText($planPath, ($j | ConvertTo-Json -Depth 20), $omEnc)
+  $rcBad = Omx validate demo
+  [System.IO.File]::WriteAllText($planPath, $good, $omEnc)
+  OmAdd "t1_new_module_validates" (($rcNew -eq 0) -and ($rcVal -eq 0) -and ($rcBad -ne 0)) "new=0 validate=0 broken-manifest!=0" "new=$rcNew validate=$rcVal broken=$rcBad"
+
+  # T2
+  New-Item -ItemType Directory -Force -Path (Join-Path $omMods "demo\skills\hello") | Out-Null
+  [System.IO.File]::WriteAllText((Join-Path $omMods "demo\skills\hello\SKILL.md"), "---`nname: hello`ndescription: demo skill used by the os-module eval`n---`nhi`n", $omEnc)
+  [System.IO.File]::WriteAllText((Join-Path $omMods "demo\commands\demo-cmd.md"), "c`n", $omEnc)
+  [System.IO.File]::WriteAllText((Join-Path $omMods "demo\agents\helper.md"), "a`n", $omEnc)
+  $p = OmProj "t2"
+  $null = Omx install demo -Project $p
+  $null = Omx enable demo -Project $p
+  $calls = (Get-Content -LiteralPath (Join-Path $ModuleTemplate "tests\off-mode-calls.json") -Raw | ConvertFrom-Json).calls
+  $badCalls = 0; $nCalls = 0
+  $hookPs = Join-Path $p ".claude\os-modules\demo\scripts\hook.ps1"
+  foreach ($c in $calls) {
+    $nCalls++
+    $out = ($c | ConvertTo-Json -Compress -Depth 6) | & powershell -NoProfile -ExecutionPolicy Bypass -File $hookPs 2>$null
+    if (($LASTEXITCODE -ne 0) -or ("$out" -ne "")) { $badCalls++ }
+  }
+  $dirs = @((Join-Path $p ".claude\skills"), (Join-Path $p ".claude\commands"), (Join-Path $p ".claude\agents"))
+  $offFiles = OmFiles $dirs
+  $callsLog = Join-Path $p ".claude\os-modules\.state\demo\calls.log"
+  OmAdd "t2_off_mode_changes_nothing" (($nCalls -eq 20) -and ($badCalls -eq 0) -and ($offFiles -eq 0) -and (-not (Test-Path -LiteralPath $callsLog))) "20 calls exit 0 + empty stdout, 0 module files in .claude" "calls=$nCalls bad=$badCalls files=$offFiles"
+  $null = Omx mode demo on -Project $p
+  $null = '{"tool_name":"Bash"}' | & powershell -NoProfile -ExecutionPolicy Bypass -File $hookPs 2>$null
+  $onFiles = OmFiles $dirs
+  $okOn = ($onFiles -eq 3) -and (Test-Path -LiteralPath $callsLog) -and ((Get-Item -LiteralPath $callsLog).Length -gt 0)
+  $null = Omx mode demo off -Project $p
+  $offAgain = OmFiles $dirs
+  if ($offAgain -ne 0) { $okOn = $false }
+  OmAdd "t2_on_adds_off_removes_components" $okOn "on: 3 files + hook logs; off: 0 files" "on_files=$onFiles after_off=$offAgain"
+  $null = Omx uninstall demo -Project $p -Purge
+
+  # T3
+  foreach ($m in @("a", "b")) {
+    $null = Omx new "rw$m"
+    $pj = Join-Path $omMods "rw$m\.claude-plugin\plugin.json"
+    $jj = [System.IO.File]::ReadAllText($pj) | ConvertFrom-Json
+    $jj.metadata.srednoffOs.rewrites = [pscustomobject]@{ "PostToolUse.updatedToolOutput" = @("Read", "mcp__.*") }
+    [System.IO.File]::WriteAllText($pj, ($jj | ConvertTo-Json -Depth 20), $omEnc)
+  }
+  $p = OmProj "t3"
+  $null = Omx install rwa -Project $p
+  $null = Omx install rwb -Project $p
+  $rca = Omx enable rwa -Project $p
+  $afterA = OmBytes (Join-Path $p ".claude\settings.local.json")
+  $rcb = Omx enable rwb -Project $p
+  OmAdd "t3_rewrites_conflict_refused" (($rca -eq 0) -and ($rcb -eq 2) -and ((OmBytes (Join-Path $p ".claude\settings.local.json")) -eq $afterA)) "enable a=0, enable b=2, settings unchanged" "a=$rca b=$rcb"
+
+  # T4
+  $p = OmProj "t4"
+  New-Item -ItemType Directory -Force -Path (Join-Path $p ".claude") | Out-Null
+  $sf = Join-Path $p ".claude\settings.local.json"
+  [System.IO.File]::WriteAllText($sf, $userSettings, $omEnc)
+  $origB = OmBytes $sf
+  $null = Omx install demo -Project $p
+  $null = Omx enable demo -Project $p
+  $null = Omx mode demo on -Project $p
+  $midText = [System.IO.File]::ReadAllText($sf)
+  $midHas = $midText.Contains("user-hook") -and $midText.Contains("hook.ps1")
+  $null = Omx disable demo -Project $p
+  $null = Omx uninstall demo -Project $p
+  OmAdd "t4_uninstall_restores_settings_bytes" (((OmBytes $sf) -eq $origB) -and $midHas -and (-not (Test-Path -LiteralPath (Join-Path $p ".claude\os-modules")))) "user + module hooks while enabled; original bytes after uninstall" "midHas=$midHas"
+  $p = OmProj "t4b"
+  $null = Omx install demo -Project $p
+  $null = Omx enable demo -Project $p
+  $null = Omx uninstall demo -Project $p
+  $left = @(Get-ChildItem -LiteralPath $p -Recurse -Force | Where-Object { $_.FullName -notmatch '\\\.git(\\|$)' }).Count
+  OmAdd "t4_uninstall_leaves_no_files_when_none_before" ($left -eq 0) "0 files left" "left=$left"
+
+  # T5 + unparsable settings
+  $fh = OmProj "fakehome"
+  $realProfile = $env:USERPROFILE
+  $env:USERPROFILE = $fh
+  $rch = Omx install demo -Project $fh
+  $env:USERPROFILE = $realProfile
+  OmAdd "t5_home_directory_refused" (($rch -ne 0) -and (-not (Test-Path -LiteralPath (Join-Path $fh ".claude")))) "non-zero exit, nothing created under the profile directory" "exit=$rch"
+  $p = OmProj "t6"
+  New-Item -ItemType Directory -Force -Path (Join-Path $p ".claude") | Out-Null
+  $sf = Join-Path $p ".claude\settings.local.json"
+  [System.IO.File]::WriteAllText($sf, "{ nope", $omEnc)
+  $origB = OmBytes $sf
+  $null = Omx install demo -Project $p
+  $rc6 = Omx enable demo -Project $p
+  OmAdd "t6_unparsable_settings_exit_3_unchanged" (($rc6 -eq 3) -and ((OmBytes $sf) -eq $origB)) "exit 3, file unchanged" "exit=$rc6"
+
+  $ErrorActionPreference = $prevEapOm
+  Remove-Item Env:\SREDNOFF_OS_MODULES_DIR -ErrorAction SilentlyContinue
+  Remove-Item -Recurse -Force -LiteralPath $omTmp -ErrorAction SilentlyContinue
 }
 
 if (Test-Path -LiteralPath $ModeFixtures) {

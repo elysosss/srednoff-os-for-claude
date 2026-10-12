@@ -25,6 +25,8 @@ source_ranker_fixtures="$registry/evals/source-ranker-fixtures.json"
 source_ranker="$registry/source-ranker.sh"
 hook_lib="$HOME/.claude/templates/claude-md-os/.claude/hooks/hook-lib.sh"
 block_bash_hook="$HOME/.claude/templates/claude-md-os/.claude/hooks/block-dangerous-bash.sh"
+os_module="$HOME/.claude/templates/claude-md-os/scripts/os-module.sh"
+module_template="$HOME/.claude/templates/claude-md-os/modules/_template"
 dangerous_fixtures="$registry/evals/dangerous-command-fixtures.json"
 profile_tag_fixtures="$registry/evals/profile-tag-fixtures.json"
 gen_profile_lock="$HOME/.claude/templates/claude-md-os/scripts/gen-profile-lock.sh"
@@ -187,6 +189,102 @@ if [ -f "$dangerous_fixtures" ] && [ -f "$block_bash_hook" ]; then
     pass=0; [ "$got" -eq "$expect" ] && pass=1
     add_result "dangerous-command" "$id" "$pass" "deny=$expect" "deny=$got"
   done < <(jq -c '.[]' "$dangerous_fixtures" | strip_cr)
+fi
+
+# OS module format (E1). The installer is exercised end to end on throwaway projects against a
+# throwaway modules directory (SREDNOFF_OS_MODULES_DIR), so nothing under the OS checkout changes.
+# T1 manifest validity, T2 "off changes nothing", T3 rewrites conflict, T4 uninstall restores
+# settings byte for byte, T5 refusal to use $HOME, plus an unparsable settings file (exit 3).
+if [ -f "$os_module" ] && [ -d "$module_template" ]; then
+  om_tmp="$(mktemp -d 2>/dev/null || mktemp -d -t srednoff)"
+  om_mods="$om_tmp/modules"; mkdir -p "$om_mods"; cp -R "$module_template" "$om_mods/_template"
+  export SREDNOFF_OS_MODULES_DIR="$om_mods"
+  omx() { bash "$os_module" "$@" >/dev/null 2>&1; }
+  om_proj() { local p="$om_tmp/$1"; rm -rf "$p"; mkdir -p "$p"; printf '%s' "$p"; }
+  USER_SETTINGS='{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "user-hook" } ] }
+    ]
+  },
+  "env": { "A": "1" }
+}
+'
+  count_files() { find "$@" -type f 2>/dev/null | grep -c . || true; }
+
+  # T1
+  omx new demo; rc_new=$?
+  omx validate demo; rc_val=$?
+  cp "$om_mods/demo/.claude-plugin/plugin.json" "$om_tmp/plugin.good"
+  jq '.metadata.srednoffOs.modes = ["on"]' "$om_tmp/plugin.good" > "$om_mods/demo/.claude-plugin/plugin.json"
+  omx validate demo; rc_bad=$?
+  cp "$om_tmp/plugin.good" "$om_mods/demo/.claude-plugin/plugin.json"
+  p1=0; [ "$rc_new" -eq 0 ] && [ "$rc_val" -eq 0 ] && [ "$rc_bad" -ne 0 ] && p1=1
+  add_result "os-module" "t1_new_module_validates" "$p1" "new=0 validate=0 broken-manifest!=0" "new=$rc_new validate=$rc_val broken=$rc_bad"
+
+  # T2
+  mkdir -p "$om_mods/demo/skills/hello"
+  printf -- '---\nname: hello\ndescription: demo skill used by the os-module eval\n---\nhi\n' > "$om_mods/demo/skills/hello/SKILL.md"
+  printf 'c\n' > "$om_mods/demo/commands/demo-cmd.md"; printf 'a\n' > "$om_mods/demo/agents/helper.md"
+  P="$(om_proj t2)"; (cd "$P" && git init -q 2>/dev/null)
+  omx install demo --project "$P"; omx enable demo --project "$P"
+  bad_calls=0; n_calls=0
+  while IFS= read -r call; do
+    n_calls=$((n_calls + 1))
+    out="$(printf '%s' "$call" | bash "$P/.claude/os-modules/demo/scripts/hook.sh" 2>/dev/null)"; rc=$?
+    if [ "$rc" -ne 0 ] || [ -n "$out" ]; then bad_calls=$((bad_calls + 1)); fi
+  done < <(jq -c '.calls[]' "$module_template/tests/off-mode-calls.json" | strip_cr)
+  off_files="$(count_files "$P/.claude/skills" "$P/.claude/commands" "$P/.claude/agents")"
+  p2=0; [ "$n_calls" -eq 20 ] && [ "$bad_calls" -eq 0 ] && [ "${off_files:-0}" -eq 0 ] && [ ! -f "$P/.claude/os-modules/.state/demo/calls.log" ] && p2=1
+  add_result "os-module" "t2_off_mode_changes_nothing" "$p2" "20 calls exit 0 + empty stdout, 0 module files in .claude" "calls=$n_calls bad=$bad_calls files=$off_files"
+  omx mode demo on --project "$P"
+  printf '{"tool_name":"Bash"}' | bash "$P/.claude/os-modules/demo/scripts/hook.sh" >/dev/null 2>&1
+  on_files="$(count_files "$P/.claude/skills" "$P/.claude/commands" "$P/.claude/agents")"
+  p2b=0; [ "${on_files:-0}" -eq 3 ] && [ -s "$P/.claude/os-modules/.state/demo/calls.log" ] && p2b=1
+  omx mode demo off --project "$P"
+  off_again="$(count_files "$P/.claude/skills" "$P/.claude/commands" "$P/.claude/agents")"
+  [ "${off_again:-1}" -eq 0 ] || p2b=0
+  add_result "os-module" "t2_on_adds_off_removes_components" "$p2b" "on: 3 files + hook logs; off: 0 files" "on_files=$on_files after_off=$off_again"
+  omx uninstall demo --project "$P" --purge
+
+  # T3
+  for m in a b; do
+    omx new "rw$m"
+    jq '.metadata.srednoffOs.rewrites = {"PostToolUse.updatedToolOutput": ["Read", "mcp__.*"]}' "$om_mods/rw$m/.claude-plugin/plugin.json" > "$om_tmp/pj" \
+      && cp "$om_tmp/pj" "$om_mods/rw$m/.claude-plugin/plugin.json"
+  done
+  P="$(om_proj t3)"
+  omx install rwa --project "$P"; omx install rwb --project "$P"; omx enable rwa --project "$P"; rca=$?
+  cp "$P/.claude/settings.local.json" "$om_tmp/t3.after_a"
+  bash "$os_module" enable rwb --project "$P" >/dev/null 2>&1; rcb=$?
+  p3=0; [ "$rca" -eq 0 ] && [ "$rcb" -eq 2 ] && cmp -s "$P/.claude/settings.local.json" "$om_tmp/t3.after_a" && p3=1
+  add_result "os-module" "t3_rewrites_conflict_refused" "$p3" "enable a=0, enable b=2, settings unchanged" "a=$rca b=$rcb"
+
+  # T4
+  P="$(om_proj t4)"; mkdir -p "$P/.claude"; printf '%s' "$USER_SETTINGS" > "$P/.claude/settings.local.json"; cp "$P/.claude/settings.local.json" "$om_tmp/t4.orig"
+  omx install demo --project "$P"; omx enable demo --project "$P"; omx mode demo on --project "$P"
+  mid_has=0; grep -q 'user-hook' "$P/.claude/settings.local.json" && grep -q 'hook\.' "$P/.claude/settings.local.json" && mid_has=1
+  omx disable demo --project "$P"; omx uninstall demo --project "$P"
+  p4=0; cmp -s "$P/.claude/settings.local.json" "$om_tmp/t4.orig" && [ "$mid_has" -eq 1 ] && [ ! -e "$P/.claude/os-modules" ] && p4=1
+  add_result "os-module" "t4_uninstall_restores_settings_bytes" "$p4" "user + module hooks while enabled; original bytes after uninstall" "midHas=$mid_has"
+  P="$(om_proj t4b)"
+  omx install demo --project "$P"; omx enable demo --project "$P"; omx uninstall demo --project "$P"
+  left="$(find "$P" -mindepth 1 -not -path '*/.git*' 2>/dev/null | grep -c . || true)"
+  p4b=0; [ "${left:-1}" -eq 0 ] && p4b=1
+  add_result "os-module" "t4_uninstall_leaves_no_files_when_none_before" "$p4b" "0 files left" "left=$left"
+
+  # T5 + unparsable settings
+  fh="$om_tmp/fakehome"; mkdir -p "$fh"
+  HOME="$fh" bash "$os_module" install demo --project "$fh" >/dev/null 2>&1; rch=$?
+  p5=0; [ "$rch" -ne 0 ] && [ ! -e "$fh/.claude" ] && p5=1
+  add_result "os-module" "t5_home_directory_refused" "$p5" "non-zero exit, nothing created under HOME" "exit=$rch"
+  P="$(om_proj t6)"; mkdir -p "$P/.claude"; printf '{ nope' > "$P/.claude/settings.local.json"; cp "$P/.claude/settings.local.json" "$om_tmp/t6.orig"
+  omx install demo --project "$P"; bash "$os_module" enable demo --project "$P" >/dev/null 2>&1; rc6=$?
+  p6=0; [ "$rc6" -eq 3 ] && cmp -s "$P/.claude/settings.local.json" "$om_tmp/t6.orig" && p6=1
+  add_result "os-module" "t6_unparsable_settings_exit_3_unchanged" "$p6" "exit 3, file unchanged" "exit=$rc6"
+
+  unset SREDNOFF_OS_MODULES_DIR
+  rm -rf "$om_tmp"
 fi
 
 if [ -f "$mode_fixtures" ]; then
