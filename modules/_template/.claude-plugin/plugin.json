@@ -1,0 +1,25 @@
+{
+  "name": "srednoff-os-__ID__",
+  "version": "0.1.0",
+  "description": "__ID__: describe what this module does in one sentence",
+  "license": "MIT",
+  "defaultEnabled": false,
+  "metadata": {
+    "srednoffOs": {
+      "schema": 1,
+      "id": "__ID__",
+      "kind": "hooks",
+      "osCompat": ">=1.20",
+      "claudeCodeCompat": ">=2.1.177",
+      "platforms": ["windows", "linux", "macos"],
+      "modes": ["off", "on"],
+      "defaultMode": "off",
+      "config": { "default": "config/default.json", "schema": "config/schema.json" },
+      "rewrites": {},
+      "requires": { "bins": [], "modules": [] },
+      "doctor": "doctor/checks.json",
+      "stateDir": "~/.claude/logs/os-modules/__ID__",
+      "hooksSource": { "windows": "hooks/hooks.windows.json", "default": "hooks/hooks.json" }
+    }
+  }
+}
