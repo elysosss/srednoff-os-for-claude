@@ -127,6 +127,19 @@ for skill_dir in "$skills_root"/*/; do
     [ -e "$skill_dir/$link_path" ] || errors="${errors}broken link (line $link_lineno): $link_path; "
   done < <(grep -noE '\]\([^)]+\)' "$skill_file")
 
+  # The same promise made in backticks: `references/foo.md` is how a skill points at its own
+  # progressive-disclosure files, and the markdown-link check above never sees it. Only
+  # paths under the directories a skill ships beside SKILL.md and carrying a file extension
+  # are checked, so prose such as `[link](url)` or a bare `CLAUDE.md` is not a finding.
+  # agents/openai.yaml is exempt: skills that mention it tell the author to create it.
+  while IFS= read -r bt_hit; do
+    [ -n "$bt_hit" ] || continue
+    bt_lineno="${bt_hit%%:*}"
+    bt_path="$(printf '%s' "${bt_hit#*:}" | tr -d '`')"
+    [ "$bt_path" = "agents/openai.yaml" ] && continue
+    [ -e "$skill_dir/$bt_path" ] || errors="${errors}dangling reference (line $bt_lineno): $bt_path; "
+  done < <(grep -noE '`(references|agents|assets|scripts|templates|evals)/[A-Za-z0-9_./-]+\.[A-Za-z0-9]+`' "$skill_file")
+
   [ "$frontmatter_ok" -eq 1 ] || errors="${errors}missing frontmatter start; "
   lower_name="$(printf '%s' "$skill_name" | tr '[:upper:]' '[:lower:]')"
   [ "$skill_name" = "$lower_name" ] || errors="${errors}directory name must be lowercase; "

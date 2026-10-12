@@ -91,6 +91,21 @@ foreach ($Skill in $SkillDirs) {
         }
     }
 
+    # The same promise made in backticks: `references/foo.md` is how a skill points at its own
+    # progressive-disclosure files, and the markdown-link check above never sees it. Only
+    # paths under the directories a skill ships beside SKILL.md and carrying a file extension
+    # are checked, so prose such as `[link](url)` or a bare `CLAUDE.md` is not a finding.
+    # agents/openai.yaml is exempt: skills that mention it tell the author to create it.
+    for ($i = 0; $i -lt $Lines.Count; $i++) {
+        foreach ($BtMatch in [regex]::Matches($Lines[$i], '`((?:references|agents|assets|scripts|templates|evals)/[A-Za-z0-9_./-]+\.[A-Za-z0-9]+)`')) {
+            $BtPath = $BtMatch.Groups[1].Value
+            if ($BtPath -eq "agents/openai.yaml") { continue }
+            if (-not (Test-Path -LiteralPath (Join-Path $Skill.FullName $BtPath))) {
+                $Errors += "dangling reference (line $($i + 1)): $BtPath"
+            }
+        }
+    }
+
     if ($Errors.Count -eq 0) {
         $Ok++
     } else {
