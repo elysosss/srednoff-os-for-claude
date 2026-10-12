@@ -11,7 +11,7 @@ Claude Code (текст: `Codex`→`Claude Code`, пути `.codex/`→`.claude/
 `templates/claude-md-os/skills-library/<name>/SKILL.md` — НЕ грузятся автоматически. Уже
 **установлены**, но не **активированы**: `gen-profile-lock.ps1/.sh` при генерации PROFILE.lock
 копирует до 20 тег-совпадающих скиллов из `skills-library/` в `.claude/skills/` проекта (жёсткий
-кап — ~100 токенов на скилл на старте сессии Claude Code, 326 скиллов целиком = 30k+ токенов, что
+кап — ~100 токенов на скилл на старте сессии Claude Code, 329 скиллов целиком = 30k+ токенов, что
 неприемлемо). Полная библиотека: `skills-library/index.json`. 2 записи (`quality-cost-skill-kernel`,
 `source-ranking-roi-selector`) — донор-специфичные мета-концепции, description backfilled, но
 контент НЕ импортирован (см. `PLAN-V2-MERGE-FROM-CODEX.md`, "НЕ БРАТЬ"). 3 записи с совпадающим
@@ -31,6 +31,39 @@ GitHub API 13.09.2026), файлы `skills/no-ai-slop/SKILL.md` + `eval.md`. **�
 Анти-overlap (правило 70, п.3): существующая текстовая запись `unslop` остаётся в каталоге как
 алиас — канон на способность «убрать AI-slop из прозы» теперь один, это `no-ai-slop`.
 Скилл `anti-ai-slop-design-critic` не пересекается: он про UI, а не про текст.
+
+## mattpocock/skills — три адаптации и два указателя, 12.10.2026
+
+[mattpocock/skills](https://github.com/mattpocock/skills) (MIT, «Copyright (c) 2026 Matt Pocock»,
+287512★, тег v1.3.1), **пин на коммит `49dd158d1076134a641b33efb035946536778336` от 09.10.2026**.
+Лицензия, звёзды и `pushed_at` взяты через GitHub API; дерево из 189 файлов просмотрено
+сабагентом на вызовы сети, `curl | sh`, `eval/exec`, base64-блобы, токены и автозапускаемые
+хуки — в кандидатах ничего не найдено; выводы перепроверены вручную по самим файлам.
+
+**Взято (адаптация, не копия, по образцу `no-ai-slop`):**
+
+- `handoff` — исходник `skills/productivity/handoff/SKILL.md` (956 Б); переписан, добавлены
+  форма документа и guardrails (не плодить второй источник правды рядом с `HANDOFF.md`).
+- `diagnosing-bugs` — исходник `skills/engineering/diagnosing-bugs/SKILL.md` (8,8 КБ); сжат,
+  шаг «human-in-the-loop» оставлен текстом, **скрипт `hitl-loop.template.sh` не импортирован**.
+  Анти-overlap (правило 70, п.6): существующие `debugging-error-recovery` и `staff-debugger-agent`
+  — шаблонные заглушки по ~2 КБ; канон на способность «диагностировать трудный баг» теперь
+  `diagnosing-bugs`, заглушки остаются как алиасы.
+- `writing-for-agents` — исходники `SKILL.md` (11 КБ) + `SKILL-MECHANICS.md` (2,6 КБ) слиты в одну
+  страницу. Аналога в библиотеке нет.
+
+Дословно переиспользованы только термины (context pointer, leading word, sprawl и т. п.) —
+это названия понятий, а не авторский текст. Их `agents/openai.yaml` намеренно НЕ импортированы.
+
+**Указатели без импорта** (строки каталога discovery-уровня): `to-tickets` (завязан на
+`/setup-matt-pocock-skills` и их трекер, пересекается с разделом Steps в ExecPlan) и
+`code-review` (ось «соответствие спеке» нова рядом с `code_review.md`, но сабагенты без лимита
+вывода и финального disposition — конфликт с `90-subagent-contract.md`). Оба — «сначала
+пожить как плагин, потом решать».
+
+**Отвергнуты поимённо:** `resolving-merge-conflicts` — удалён из апстрима (коммит `daa01d8`),
+на HEAD его нет; `research` — 806 Б, дублирует `github-research` и правило 90, не добавляет ни
+лимита вывода, ни disposition.
 
 ## Discovery-верификация ссылок, 13.09.2026 (9 записей каталога, контент НЕ импортирован)
 

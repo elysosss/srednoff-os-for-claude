@@ -23635,7 +23635,67 @@
       "source_raw": "GH:petergyang/no-ai-slop",
       "group": "G3",
       "description": "Edit prose out of generic AI phrasing while keeping the author's voice, or audit a draft without rewriting it. Adapted into skills-library (MIT, attribution in INSTALL-SOURCES.md); supersedes the text-only `unslop` entry as the canon for prose de-slopping. MIT, 9035*, verified 13.09.2026."
+    },
+    {
+      "id": 2064,
+      "name": "handoff",
+      "tags": [
+        "docs",
+        "general"
+      ],
+      "source": "GH",
+      "source_raw": "GH:mattpocock/skills",
+      "group": "G2",
+      "description": "Write a one-page handoff document so a fresh agent or session can continue the work: goal, state, decisions with reasons, next step, suggested skills; links instead of copies, secrets redacted, saved outside the workspace. Adapted into skills-library (MIT, attribution in INSTALL-SOURCES.md). MIT, 287512*, verified 12.10.2026 (commit 49dd158)."
+    },
+    {
+      "id": 2065,
+      "name": "diagnosing-bugs",
+      "tags": [
+        "test",
+        "quality"
+      ],
+      "source": "GH",
+      "source_raw": "GH:mattpocock/skills",
+      "group": "G2",
+      "description": "Diagnosis loop for hard bugs and performance regressions: build a red-capable feedback loop first, reproduce and minimise, 3-5 ranked falsifiable hypotheses, one-variable-at-a-time instrumentation with tagged logs, regression test at a correct seam, cleanup. Adapted into skills-library without the original helper script; supersedes the generic stubs `debugging-error-recovery` and `staff-debugger-agent` as the canon for hard-bug diagnosis. MIT, 287512*, verified 12.10.2026 (commit 49dd158)."
+    },
+    {
+      "id": 2066,
+      "name": "writing-for-agents",
+      "tags": [
+        "docs",
+        "meta"
+      ],
+      "source": "GH",
+      "source_raw": "GH:mattpocock/skills",
+      "group": "G2",
+      "description": "How to write documents an agent reads (skills, CLAUDE.md, rules): context-pointer wording, information hierarchy and progressive disclosure, completion criteria, skill invocation choice, pruning of duplicates and no-ops. Adapted into skills-library, two upstream pages merged into one. MIT, 287512*, verified 12.10.2026 (commit 49dd158)."
+    },
+    {
+      "id": 2067,
+      "name": "to-tickets",
+      "tags": [
+        "product",
+        "docs"
+      ],
+      "source": "GH",
+      "source_raw": "GH:mattpocock/skills",
+      "group": "G2",
+      "description": "Splits a plan into tracer-bullet vertical-slice tickets with blocking edges and publishes them to a tracker. Discovery-tier (not imported to skills-library) - hard-wired to the author's `/setup-matt-pocock-skills` and tracker docs, and it overlaps the Steps section of an ExecPlan (`60-exec-plans.md`); try it as a plugin before deciding. MIT, 287512*, verified 12.10.2026 (commit 49dd158)."
+    },
+    {
+      "id": 2068,
+      "name": "code-review",
+      "tags": [
+        "quality",
+        "git"
+      ],
+      "source": "GH",
+      "source_raw": "GH:mattpocock/skills",
+      "group": "G2",
+      "description": "Two-axis review (standards and spec) through parallel sub-agents with a Fowler smell baseline. Discovery-tier (not imported to skills-library) - the spec axis is new next to `code_review.md` and `production-review`, but its sub-agents have no output cap or final disposition (conflicts with `90-subagent-contract.md`) and it needs tracker setup; adapt before copying. MIT, 287512*, verified 12.10.2026 (commit 49dd158)."
     }
   ],
-  "count": 2062
+  "count": 2067
 }
