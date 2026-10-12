@@ -632,6 +632,13 @@
       "devops"
     ]
   },
+  "diagnosing-bugs": {
+    "path": "skills-library/diagnosing-bugs/SKILL.md",
+    "tags": [
+      "test",
+      "quality"
+    ]
+  },
   "docker-compose-local-dev-environments": {
     "path": "skills-library/docker-compose-local-dev-environments/SKILL.md",
     "tags": [
@@ -898,6 +905,13 @@
     "path": "skills-library/growth-experiment-backlog/SKILL.md",
     "tags": [
       "marketing"
+    ]
+  },
+  "handoff": {
+    "path": "skills-library/handoff/SKILL.md",
+    "tags": [
+      "docs",
+      "general"
     ]
   },
   "headless-component-composition": {
@@ -2005,6 +2019,13 @@
     "tags": [
       "3d",
       "perf"
+    ]
+  },
+  "writing-for-agents": {
+    "path": "skills-library/writing-for-agents/SKILL.md",
+    "tags": [
+      "docs",
+      "meta"
     ]
   },
   "xr-ar-web-experiences": {
