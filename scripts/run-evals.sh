@@ -24,6 +24,8 @@ secret_path_fixtures="$registry/evals/secret-path-fixtures.json"
 source_ranker_fixtures="$registry/evals/source-ranker-fixtures.json"
 source_ranker="$registry/source-ranker.sh"
 hook_lib="$HOME/.claude/templates/claude-md-os/.claude/hooks/hook-lib.sh"
+block_bash_hook="$HOME/.claude/templates/claude-md-os/.claude/hooks/block-dangerous-bash.sh"
+dangerous_fixtures="$registry/evals/dangerous-command-fixtures.json"
 profile_tag_fixtures="$registry/evals/profile-tag-fixtures.json"
 gen_profile_lock="$HOME/.claude/templates/claude-md-os/scripts/gen-profile-lock.sh"
 init_project="$HOME/.claude/templates/claude-md-os/scripts/init-claude-project.sh"
@@ -167,6 +169,24 @@ if [ -f "$create_only_fixtures" ] && [ -f "$init_project" ] && [ -f "$gen_profil
     pass=0; [ "${#problems[@]}" -eq 0 ] && pass=1
     add_result "create-only" "$id" "$pass" "files untouched unless --force" "${problems[*]:-ok}"
   done < <(jq -c '.[]' "$create_only_fixtures" | strip_cr)
+fi
+
+# Dangerous-command regression. The hook only ever saw Bash-tool calls; the PowerShell tool
+# (default on Windows) skipped it entirely, and the hook knew no PowerShell syntax. Each
+# fixture feeds the real hook a PreToolUse payload and checks the verdict, including
+# commands that must stay allowed (a recursive delete of a build dir is not an incident).
+if [ -f "$dangerous_fixtures" ] && [ -f "$block_bash_hook" ]; then
+  while IFS= read -r fx; do
+    [ -z "$fx" ] && continue
+    id="$(printf '%s' "$fx" | jq -r '.id')"
+    cmd="$(printf '%s' "$fx" | jq -r '.command')"
+    tool="$(printf '%s' "$fx" | jq -r '.tool')"
+    expect="$(printf '%s' "$fx" | jq -r 'if .expectDeny then 1 else 0 end')"
+    out="$(jq -nc --arg c "$cmd" --arg t "$tool" '{tool_name: $t, tool_input: {command: $c}}' | bash "$block_bash_hook" 2>/dev/null)"
+    got=0; printf '%s' "$out" | grep -q '"permissionDecision":"deny"' && got=1
+    pass=0; [ "$got" -eq "$expect" ] && pass=1
+    add_result "dangerous-command" "$id" "$pass" "deny=$expect" "deny=$got"
+  done < <(jq -c '.[]' "$dangerous_fixtures" | strip_cr)
 fi
 
 if [ -f "$mode_fixtures" ]; then

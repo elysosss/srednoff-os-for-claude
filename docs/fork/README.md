@@ -40,7 +40,7 @@
 |---|---|---|---|---|
 | 0 | Перевести задачи и спеки на модель форка — **сделано 12.10** (этот коммит); осталось решить судьбу старых заметок `PR-BODIES.md`, `tmp.md` (не в git) и удалить влитые локальные ветки | — | — | — |
 | 1 | **Перезатирание CLAUDE.md и файлов проекта** (create-only) — **сделано 12.10**: фикс влит в `main` форка, PR в апстрим [#21](https://github.com/srednoff888-art/srednoff-os-for-claude/pull/21) ждёт мержа | [#34](https://github.com/elysosss/srednoff-os-for-claude/issues/34) | upstream-candidate | — |
-| 2 | PowerShell-инструмент обходит все хуки OS (PF-28) | [#6](https://github.com/elysosss/srednoff-os-for-claude/issues/6) | upstream-candidate | 1 |
+| 2 | PowerShell-инструмент обходит все хуки OS (PF-28) — **сделано 12.10**: влито в `main` форка (матчер `Bash\|PowerShell` + PowerShell-синтаксис в `block-dangerous-bash`, 23 фикстуры, bash 106/118 → 118/118, PowerShell 118/118). PR в апстрим — ждёт решения владельца. Форма `tool_input.command` взята из официальных доков, живой пробой не подтверждена (CLI был не авторизован) | [#6](https://github.com/elysosss/srednoff-os-for-claude/issues/6) | upstream-candidate | — |
 | 3 | Спайк F1: go/no-go по A-02 (оригинал секрета в транскрипте и при `--resume`) и A-09 (что модель видит после Edit) | [#8](https://github.com/elysosss/srednoff-os-for-claude/issues/8) | fork-only | 1 |
 | 4 | E1 — формат модулей; на нём стоит всё остальное | [#7](https://github.com/elysosss/srednoff-os-for-claude/issues/7) | fork-only | 2.5–3.5 |
 | 5 | Дальше по ценности: F1 (#9, если спайк зелёный); D2 + D3 (#25, #26) — карточки и страж области; часть O1 (#10) про `ANTHROPIC_BASE_URL`/ключи — кандидат в апстрим | см. задачи | | |
